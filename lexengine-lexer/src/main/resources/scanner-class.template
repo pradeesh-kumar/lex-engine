@@ -1,0 +1,11 @@
+${package}
+
+public class ${className} {
+
+  public ${functionReturnType} ${functionName}() {
+
+  }
+
+  public ${functionReturnType} peek() {
+  }
+}
