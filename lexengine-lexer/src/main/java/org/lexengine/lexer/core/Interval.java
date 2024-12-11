@@ -55,7 +55,7 @@ public class Interval implements Comparable<Interval> {
 
   @Override
   public String toString() {
-    return String.format("(%d-%d)", start, end);
+    return start == end ? String.format("%c", start) : String.format("[%c-%c]", start, end);
   }
 
   private int calcHashCode() {

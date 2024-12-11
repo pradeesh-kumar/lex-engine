@@ -10,6 +10,8 @@ import org.lexengine.lexer.util.Options;
 /** A utility class providing methods for logging messages at different levels. */
 public class Out {
 
+  private static final String NEWLINE = System.lineSeparator();
+
   public static final String VERSION = "v1.0.0";
 
   private Out() {}
@@ -45,11 +47,11 @@ public class Out {
   }
 
   private static void write(Level level, String msg) {
-    out.write(level + ": " + msg);
+    out.write(String.format("%s: %s%s", level, msg, NEWLINE));
   }
 
   private static void write(Level level, String msg, Object... args) {
-    out.format(level + ": " + msg, args);
+    out.format(String.format("%s: %s%s", level, msg, NEWLINE), args);
   }
 
   public static void printBanner() {

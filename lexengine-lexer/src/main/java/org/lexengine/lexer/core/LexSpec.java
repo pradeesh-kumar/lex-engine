@@ -162,6 +162,11 @@ class Action {
   public String action() {
     return action;
   }
+
+  @Override
+  public String toString() {
+    return action;
+  }
 }
 
 record RegexAction(Regex regex, Action action) {}

@@ -4,6 +4,8 @@
 */
 package org.lexengine.lexer.core;
 
+import org.lexengine.lexer.logging.Out;
+
 import java.io.File;
 import java.util.Map;
 
@@ -23,6 +25,7 @@ public class LexerGenerator {
   public void generate() {
     this.lexSpec = new SpecParser(lexerspecFile).parseSpec();
     LexGenUtils.extractAlphabetsFromRegex(lexSpec.regexActionList(), languageAlphabets);
+    Out.debug("Language alphabets: " + languageAlphabets);
     this.alphabetIndex = LexGenUtils.createAlphabetsIndex(this.languageAlphabets.intervals());
     Nfa nfa =
         new NfaGenerator(lexSpec.regexActionList(), languageAlphabets, alphabetIndex).generate();

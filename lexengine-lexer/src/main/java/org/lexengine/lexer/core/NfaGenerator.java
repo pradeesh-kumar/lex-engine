@@ -49,8 +49,7 @@ public final class NfaGenerator {
    */
   public Nfa generate() {
     Nfa nfa = new Nfa(languageAlphabets, alphabetIndex);
-    Nfa.NfaState state =
-        regexActions.stream()
+    Nfa.NfaState state = regexActions.stream()
             .map(regexAction -> new NfaStateGenerator(regexAction, nfa))
             .map(NfaStateGenerator::generate)
             .reduce(Nfa.NfaState::alternateWithoutNewAccept)
@@ -85,6 +84,7 @@ public final class NfaGenerator {
      * @return the generated NFA state
      */
     Nfa.NfaState generate() {
+      Out.debug("Generating NFA state for regex \"%s\"", regexAction.regex());
       Nfa.NfaState state = generateInternal();
       state.registerAction(regexAction.action());
       return state;
@@ -131,10 +131,9 @@ public final class NfaGenerator {
     private Nfa.NfaState applyLParen(Nfa.NfaState current, RegexToken token) {
       Nfa.NfaState state = generateInternal();
       if (current == null) {
-        current = state;
-      } else {
-        current.concat(state);
+        return state;
       }
+      current.concat(state);
       return current;
     }
 
@@ -149,10 +148,9 @@ public final class NfaGenerator {
       Nfa.NfaState state = nfa.new NfaState(alphabetIndex.get(token.interval()));
       applyQuantifierIfPresent(state, token);
       if (current == null) {
-        current = state;
-      } else {
-        current.concat(state);
+        return state;
       }
+      current.concat(state);
       return current;
     }
 
@@ -210,10 +208,9 @@ public final class NfaGenerator {
       }
       applyQuantifierIfPresent(firstState, token);
       if (current == null) {
-        current = firstState;
-      } else {
-        current.concat(firstState);
+        return firstState;
       }
+      current.concat(firstState);
       return current;
     }
 
@@ -248,6 +245,10 @@ public final class NfaGenerator {
         case '*' -> state.closure();
         case '?' -> state.zeroOrOne();
         case '+' -> state.oneOrMore();
+        default -> {
+          Out.error("Unrecognized quantifier %s", token.quantifier());
+          throw GeneratorException.error(ErrorType.ERR_REGEX_ERR);
+        }
       }
     }
   }

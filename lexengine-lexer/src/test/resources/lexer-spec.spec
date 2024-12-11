@@ -12,6 +12,10 @@ returnType=Token
 
 # Keywords
 "int" { return Token.keyword(Token.Type.INT); }
+"float" { return Token.keyword(Token.Type.FLOAT); }
+"new" { return Token.keyword(Token.Type.NEW); }
+"not" { return Token.keyword(Token.Type.NOT); }
 
 # Identifier
-"[a-zA-Z_][a-zA-Z0-9_]*" { return Token.identifier(value); }
+"[A-Z0-9]" { return Token.identifier(value); }
+#"[a-zA-Z0-9_]*" { return Token.identifier(value); }

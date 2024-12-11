@@ -6,6 +6,7 @@ package org.lexengine.lexer.core;
 
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * A data structure representing a set of non-overlapping integer ranges.
@@ -120,6 +121,23 @@ public class DisjointIntSet {
       throw new IllegalArgumentException("Illegal characters in the input list");
     }
     return a.stream().filter(Predicate.not(b::contains)).toList();
+  }
+
+  public Interval getInterval(int codePoint) {
+    Interval key = Interval.of(codePoint, codePoint);
+    int pos = Collections.binarySearch(this.intervals, key, (i1, i2) -> {
+      if (i2.start() >= i1.start() && i2.end() <= i1.end()) {
+        return 0;
+      }
+      if (i2.start() == i1.start()) {
+        return i1.end() - i2.end();
+      }
+      return i1.start() - i2.start();
+    });
+    if (pos < 0) {
+      return null;
+    }
+    return intervals.get(pos);
   }
 
   /**
@@ -282,5 +300,10 @@ public class DisjointIntSet {
    */
   public int maxVal() {
     return maxVal;
+  }
+
+  @Override
+  public String toString() {
+    return this.intervals.stream().map(Interval::toString).collect(Collectors.joining(", "));
   }
 }
