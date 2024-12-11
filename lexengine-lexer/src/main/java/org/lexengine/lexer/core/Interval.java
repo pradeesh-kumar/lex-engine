@@ -10,9 +10,9 @@ package org.lexengine.lexer.core;
  */
 public class Interval implements Comparable<Interval> {
 
-  int start;
-  int end;
-  int hashCode;
+  private final int start;
+  private final int end;
+  private final int hashCode;
 
   /**
    * Private constructor to prevent direct instantiation. Use the factory methods instead.
@@ -108,5 +108,23 @@ public class Interval implements Comparable<Interval> {
       return 0;
     }
     return Integer.compare(this.start, other.start);
+  }
+
+  /**
+   * Returns the start value of this interval.
+   *
+   * @return the start value of the interval
+   */
+  public int start() {
+    return start;
+  }
+
+  /**
+   * Returns the end value of this interval.
+   *
+   * @return the end value of the interval
+   */
+  public int end() {
+    return end;
   }
 }

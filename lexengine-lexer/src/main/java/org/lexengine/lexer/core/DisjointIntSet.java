@@ -5,6 +5,7 @@
 package org.lexengine.lexer.core;
 
 import java.util.*;
+import java.util.function.Predicate;
 
 /**
  * A data structure representing a set of non-overlapping integer ranges.
@@ -12,10 +13,11 @@ import java.util.*;
  * <p>This class allows you to store and manage multiple intervals of integers, ensuring that they
  * do not overlap with each other. It provides methods for adding individual values or ranges,
  * checking intersections, and retrieving the stored intervals.
- *
+ * </p>
  * <p>Note: This is a lazy disjoint data structure. Which means that, the disjoint operation doesn't
  * happen immediately whenever you add new elements. Rather It happens implicitly when you call the
- * methods getIntersections() and intervals().
+ * methods getIntersections(), getDifference() and intervals().
+ * </p>
  */
 public class DisjointIntSet {
 
@@ -61,10 +63,9 @@ public class DisjointIntSet {
    * Adds a single value to the set.
    *
    * @param codePoint the value to add
-   * @return true if the addition was successful, false otherwise
    */
-  public boolean add(int codePoint) {
-    return add(Interval.of(codePoint));
+  public void add(int codePoint) {
+    add(Interval.of(codePoint));
   }
 
   /**
@@ -72,22 +73,53 @@ public class DisjointIntSet {
    *
    * @param start the starting point of the range (inclusive)
    * @param end the ending point of the range (exclusive)
-   * @return true if the addition was successful, false otherwise
    */
-  public boolean addRange(int start, int end) {
-    return add(Interval.of(start, end));
+  public void addRange(int start, int end) {
+    add(Interval.of(start, end));
   }
 
-  public boolean add(Interval interval) {
+  public void add(Interval interval) {
     this.disjointed = false;
     this.intervals.add(interval);
     updateMinMax(interval);
-    return true;
   }
 
+  /**
+   * Updates the minimum and maximum values tracked by this DisjointIntSet based on the provided
+   * interval.
+   *
+   * <p>If no previous minimum or maximum value has been recorded (-1), sets them to the
+   * corresponding bounds of the given interval. Otherwise, updates these values to be the
+   * smaller/larger of the current minimum/maximum and the respective bound of the interval.
+   *
+   * @param interval the interval whose bounds will influence the updated minimum and maximum values
+   */
   private void updateMinMax(Interval interval) {
-    this.minVal = this.minVal == -1 ? interval.start : Math.min(minVal, interval.start);
-    this.maxVal = Math.max(maxVal, interval.end);
+    this.minVal = this.minVal == -1 ? interval.start() : Math.min(minVal, interval.start());
+    this.maxVal = Math.max(maxVal, interval.end());
+  }
+
+  /**
+   * Computes the difference between this DisjointIntSet and another collection of intervals.
+   *
+   * <p>This method returns a list of intervals that are present in this set but not in the provided
+   * collection. Note that the resulting intervals may not be disjoint due to the nature of the
+   * difference operation.
+   *
+   * @param other the collection of intervals to compute the difference against
+   * @return a list of intervals in this set but not in the provided collection
+   * @throws IllegalArgumentException if the provided collection contains intervals that are not
+   *     contained within this set
+   */
+  public List<Interval> getDifference(Collection<Interval> other) {
+    checkAndDoDisjoint();
+    Set<Interval> a = Set.copyOf(this.intervals);
+    Set<Interval> b = Set.copyOf(other);
+    boolean illegalChars = b.stream().anyMatch(Predicate.not(a::contains));
+    if (illegalChars) {
+      throw new IllegalArgumentException("Illegal characters in the input list");
+    }
+    return a.stream().filter(Predicate.not(b::contains)).toList();
   }
 
   /**
@@ -107,7 +139,7 @@ public class DisjointIntSet {
    * @return a list of intervals intersecting with the given value
    */
   public List<Interval> getIntersection(Interval interval) {
-    return getIntersection(interval.start, interval.end);
+    return getIntersection(interval.start(), interval.end());
   }
 
   /**
@@ -137,18 +169,18 @@ public class DisjointIntSet {
       return List.of();
     }
     Interval interval = intervals.get(pos);
-    if (start == end && interval.start != interval.end) {
+    if (start == end && interval.start() != interval.end()) {
       return List.of();
     }
     int left = pos;
-    while (left >= 0 && intervals.get(left).start > start) {
+    while (left >= 0 && intervals.get(left).start() > start) {
       left--;
     }
     if (left < 0) {
       return List.of();
     }
     int right = pos;
-    while (right < size() && intervals.get(right).end < end) {
+    while (right < size() && intervals.get(right).end() < end) {
       right++;
     }
     if (right >= size()) {
@@ -187,8 +219,8 @@ public class DisjointIntSet {
     record Event(int position, int type) {}
     List<Event> events = new ArrayList<>();
     for (Interval interval : intervals) {
-      events.add(new Event(interval.start, 1));
-      events.add(new Event(interval.end + 1, -1));
+      events.add(new Event(interval.start(), 1));
+      events.add(new Event(interval.end() + 1, -1));
     }
     events.sort(
         (e1, e2) ->

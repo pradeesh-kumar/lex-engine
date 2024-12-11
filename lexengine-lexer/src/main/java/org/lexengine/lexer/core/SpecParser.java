@@ -103,7 +103,7 @@ public class SpecParser {
     switch (propName) {
       case "class" -> specBuilder.lexClassName(propValue);
       case "package" -> specBuilder.lexPackageName(propValue);
-      case "function" -> specBuilder.functionName(propValue);
+      case "methodName" -> specBuilder.methodName(propValue);
       case "returnType" -> specBuilder.returnType(propValue);
       default -> {
         Out.error("Invalid property line: '%s' in the lexer spec file!", line);

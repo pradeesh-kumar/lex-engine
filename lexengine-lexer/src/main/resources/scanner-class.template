@@ -2,10 +2,10 @@ ${package}
 
 public class ${className} {
 
-  public ${functionReturnType} ${functionName}() {
+  public ${methodReturnType} ${methodName}() {
 
   }
 
-  public ${functionReturnType} peek() {
+  public ${methodReturnType} peek() {
   }
 }

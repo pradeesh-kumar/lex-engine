@@ -23,7 +23,7 @@ public class SpecParserTest {
 
     assertEquals(2, lexSpec.regexActionList().size());
     assertEquals("MyLexer", lexSpec.lexClassName());
-    assertEquals("com.pradeesh.comp.lex", lexSpec.lexPackageName());
+    assertEquals("org.lexengine.lexer.generated", lexSpec.lexPackageName());
   }
 
   @Test

@@ -51,6 +51,45 @@ public class DisjointIntSetTest {
             Interval.of(106, 108)));
   }
 
+  @Test
+  public void testGetDifference_CompleteOverlap_ReturnsEmptyList() {
+    // Arrange
+    DisjointIntSet setA = new DisjointIntSet();
+    setA.add(Interval.of(1, 3));
+    setA.add(Interval.of(5, 7));
+
+    Collection<Interval> setB = Arrays.asList(Interval.of(1, 3), Interval.of(5, 7));
+
+    // Act
+    List<Interval> result = setA.getDifference(setB);
+
+    // Assert
+    assertTrue(result.isEmpty());
+  }
+
+  @Test
+  public void testGetDifference_IllegalCharacters_ThrowsIllegalArgumentException() {
+    // Arrange
+    DisjointIntSet setA = new DisjointIntSet();
+    setA.add(Interval.of(1, 3));
+    setA.add(Interval.of(5, 7));
+
+    Collection<Interval> setB =
+        Arrays.asList(Interval.of(10, 12), Interval.of(15, 18)); // 18 is outside setA
+
+    // Act & Assert
+    assertThrows(IllegalArgumentException.class, () -> setA.getDifference(setB));
+  }
+
+  @Test
+  public void testGetDifference_NullInput_ThrowsNullPointerException() {
+    // Arrange
+    DisjointIntSet setA = new DisjointIntSet();
+
+    // Act & Assert
+    assertThrows(NullPointerException.class, () -> setA.getDifference(null));
+  }
+
   private void assertIntersection(DisjointIntSet set, int start, int end, List<Interval> expected) {
     List<Interval> intersections =
         start == end ? set.getIntersection(start) : set.getIntersection(start, end);

@@ -12,16 +12,29 @@ import org.lexengine.lexer.error.ErrorType;
 import org.lexengine.lexer.error.GeneratorException;
 import org.lexengine.lexer.logging.Out;
 
+/**
+ * Generates an NFA (Non-Deterministic Finite Automaton) from a list of regular expressions and
+ * actions.
+ */
 public final class NfaGenerator {
 
   private final List<RegexAction> regexActions;
   private final DisjointIntSet languageAlphabets;
   private final Map<Interval, Integer> alphabetIndex;
 
+  /**
+   * Constructs an NfaGenerator instance with the given list of regular expressions and actions,
+   * language alphabets, and alphabet index.
+   *
+   * @param regexActions the list of regular expressions and actions
+   * @param languageAlphabets the set of language alphabets
+   * @param alphabetIndex the mapping of intervals to indices
+   */
   NfaGenerator(
       List<RegexAction> regexActions,
       DisjointIntSet languageAlphabets,
       Map<Interval, Integer> alphabetIndex) {
+
     Objects.requireNonNull(regexActions);
     Objects.requireNonNull(languageAlphabets);
     this.regexActions = regexActions;
@@ -29,72 +42,213 @@ public final class NfaGenerator {
     this.alphabetIndex = alphabetIndex;
   }
 
+  /**
+   * Generates an NFA from the provided regular expressions and actions.
+   *
+   * @return the generated NFA
+   */
   public Nfa generate() {
-    Nfa nfa = new Nfa(languageAlphabets.size());
-    // regexActions.forEach(regexAction -> addRegexActionToNfa(regexAction, nfa));
+    Nfa nfa = new Nfa(languageAlphabets, alphabetIndex);
+    Nfa.NfaState state =
+        regexActions.stream()
+            .map(regexAction -> new NfaStateGenerator(regexAction, nfa))
+            .map(NfaStateGenerator::generate)
+            .reduce(Nfa.NfaState::alternateWithoutNewAccept)
+            .get();
+    Out.info("NFA created. Number of states: %d", nfa.statesCount());
+    nfa.setStartState(state.start());
     return nfa;
   }
 
-  private class GeneratorInternal {
+  /** Helper class for generating NFA states from regular expressions. */
+  private class NfaStateGenerator {
 
     private final RegexAction regexAction;
     private final Iterator<RegexToken> regexTknItr;
     private final Nfa nfa;
 
-    public GeneratorInternal(RegexAction regexAction, Nfa nfa) {
+    /**
+     * Constructs a new NfaStateGenerator instance.
+     *
+     * @param regexAction the action associated with the regular expression
+     * @param nfa the NFA object used to create new states
+     */
+    private NfaStateGenerator(RegexAction regexAction, Nfa nfa) {
       this.regexAction = regexAction;
       this.regexTknItr = regexAction.regex().iterator();
       this.nfa = nfa;
     }
 
-    public Nfa.NfaState generate() {
+    /**
+     * Generates an NFA state based on the provided regular expression.
+     *
+     * @return the generated NFA state
+     */
+    Nfa.NfaState generate() {
+      Nfa.NfaState state = generateInternal();
+      state.registerAction(regexAction.action());
+      return state;
+    }
+
+    /**
+     * Recursively generates an NFA state by processing the remaining tokens in the regular
+     * expression.
+     *
+     * @return the generated NFA state
+     */
+    private Nfa.NfaState generateInternal() {
       Nfa.NfaState current = null;
       while (regexTknItr.hasNext()) {
         RegexToken token = regexTknItr.next();
         switch (token.type()) {
-          case RegexToken.Type.Literal -> {
-            Nfa.NfaState state = nfa.new NfaState(alphabetIndex.get(token.interval()));
-            if (current == null) {
-              current = state;
-            } else {
-              current.concat(state);
-            }
-          }
-          case RegexToken.Type.LParen -> {
-            Nfa.NfaState state = generate();
-            if (current == null) {
-              current = state;
-            } else {
-              current.concat(state);
-            }
-          }
+          case RegexToken.Type.Literal -> current = applyLiteral(current, token);
+          case RegexToken.Type.LParen -> current = applyLParen(current, token);
           case RegexToken.Type.RParen -> {
+            applyQuantifierIfPresent(current, token);
             return current;
           }
-          case RegexToken.Type.CharClass -> {
-            List<Interval> intersection = languageAlphabets.getIntersection(token.intervals());
-            List<Nfa.NfaState> stateList =
-                intersection.stream()
-                    .map(alphabetIndex::get)
-                    .map(index -> nfa.new NfaState(index))
-                    .toList();
+          case RegexToken.Type.CharClass -> current = applyCharClass(current, token);
+          case RegexToken.Type.InvertedCharClass ->
+              current = applyInvertedCharClass(current, token);
+          case RegexToken.Type.Dot -> current = applyDot(current, token);
+          case RegexToken.Type.Bar -> applyAlternate(current, token);
+          default -> {
+            Out.error("Unrecognized regular expression token %s", token.type());
+            throw GeneratorException.error(ErrorType.ERR_REGEX_INVALID);
           }
-          case RegexToken.Type.InvertedCharClass -> {}
-          case RegexToken.Type.Bar -> {
-            Nfa.NfaState state = generate();
-            if (current == null) {
-              Out.error(
-                  "Invalid regex %s. Contains invalid escape sequence character",
-                  regexAction.regex().toString());
-              throw GeneratorException.error(ErrorType.ERR_REGEX_INVALID);
-            }
-            current.alternate(state);
-          }
-          case RegexToken.Type.Dollar -> {}
-          case RegexToken.Type.Dot -> {}
         }
       }
       return current;
+    }
+
+    /**
+     * Applies a left parenthesis token to the current NFA state.
+     *
+     * @param current the current NFA state
+     * @param token the left parenthesis token
+     * @return the updated NFA state
+     */
+    private Nfa.NfaState applyLParen(Nfa.NfaState current, RegexToken token) {
+      Nfa.NfaState state = generateInternal();
+      if (current == null) {
+        current = state;
+      } else {
+        current.concat(state);
+      }
+      return current;
+    }
+
+    /**
+     * Applies a literal token to the current NFA state.
+     *
+     * @param current the current NFA state
+     * @param token the literal token
+     * @return the updated NFA state
+     */
+    private Nfa.NfaState applyLiteral(Nfa.NfaState current, RegexToken token) {
+      Nfa.NfaState state = nfa.new NfaState(alphabetIndex.get(token.interval()));
+      applyQuantifierIfPresent(state, token);
+      if (current == null) {
+        current = state;
+      } else {
+        current.concat(state);
+      }
+      return current;
+    }
+
+    /**
+     * Applies a dot token to the current NFA state.
+     *
+     * @param current the current NFA state
+     * @param token the dot token
+     * @return the updated NFA state
+     */
+    private Nfa.NfaState applyDot(Nfa.NfaState current, RegexToken token) {
+      List<Interval> allIntervals = languageAlphabets.intervals();
+      return applyCharClass(current, token, allIntervals);
+    }
+
+    /**
+     * Applies a character class token to the current NFA state.
+     *
+     * @param current the current NFA state
+     * @param token the character class token
+     * @return the updated NFA state
+     */
+    private Nfa.NfaState applyCharClass(Nfa.NfaState current, RegexToken token) {
+      List<Interval> intersection = languageAlphabets.getIntersection(token.intervals());
+      return applyCharClass(current, token, intersection);
+    }
+
+    /**
+     * Applies an inverted character class token to the current NFA state.
+     *
+     * @param current the current NFA state
+     * @param token the inverted character class token
+     * @return the updated NFA state
+     */
+    private Nfa.NfaState applyInvertedCharClass(Nfa.NfaState current, RegexToken token) {
+      List<Interval> difference = languageAlphabets.getDifference(token.intervals());
+      return applyCharClass(current, token, difference);
+    }
+
+    /**
+     * Applies a character class token to the current NFA state using the specified intervals.
+     *
+     * @param current the current NFA state
+     * @param token the character class token
+     * @param intervals the intervals to use
+     * @return the updated NFA state
+     */
+    private Nfa.NfaState applyCharClass(
+        Nfa.NfaState current, RegexToken token, List<Interval> intervals) {
+      Iterator<Interval> intervalItr = intervals.iterator();
+      Interval first = intervalItr.next();
+      var firstState = nfa.new NfaState(alphabetIndex.get(first));
+      while (intervalItr.hasNext()) {
+        firstState.alternate(nfa.new NfaState(alphabetIndex.get(intervalItr.next())));
+      }
+      applyQuantifierIfPresent(firstState, token);
+      if (current == null) {
+        current = firstState;
+      } else {
+        current.concat(firstState);
+      }
+      return current;
+    }
+
+    /**
+     * Applies an alternate token to the current NFA state.
+     *
+     * @param current the current NFA state
+     * @param token the alternate token
+     */
+    private void applyAlternate(Nfa.NfaState current, RegexToken token) {
+      Nfa.NfaState state = generateInternal();
+      if (current == null) {
+        Out.error(
+            "Invalid regex %s. Contains invalid escape sequence character",
+            regexAction.regex().toString());
+        throw GeneratorException.error(ErrorType.ERR_REGEX_INVALID);
+      }
+      current.alternate(state);
+    }
+
+    /**
+     * Applies a quantifier to the specified NFA state if present.
+     *
+     * @param state the NFA state to apply the quantifier to
+     * @param token the token containing the quantifier information
+     */
+    private void applyQuantifierIfPresent(Nfa.NfaState state, RegexToken token) {
+      if (!token.hasQuantifier()) {
+        return;
+      }
+      switch (token.quantifier()) {
+        case '*' -> state.closure();
+        case '?' -> state.zeroOrOne();
+        case '+' -> state.oneOrMore();
+      }
     }
   }
 }

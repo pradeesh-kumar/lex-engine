@@ -20,6 +20,10 @@ public class Out {
     write(Level.INFO, msg);
   }
 
+  public static void info(String msg, Object... args) {
+    write(Level.INFO, msg, args);
+  }
+
   public static void debug(String msg) {
     if (Options.verbose) write(Level.DEBUG, msg);
   }
