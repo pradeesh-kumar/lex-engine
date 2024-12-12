@@ -44,5 +44,17 @@ public class NfaGeneratorTest {
         action = nfa.test("0");
         assertNotNull(action);
         System.out.println(action);
+
+        action = nfa.test("9");
+        assertNotNull(action);
+        System.out.println(action);
+
+        action = nfa.test("D");
+        assertNotNull(action);
+        System.out.println(action);
+
+        action = nfa.test("alphalfa");
+        assertNotNull(action);
+        System.out.println(action);
     }
 }

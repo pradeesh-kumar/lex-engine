@@ -89,23 +89,23 @@ public class Nfa {
     if (finalStates.get(curState) && pos >= input.length()) {
       return actionMap.get(curState);
     }
-    if (pos >= input.length()) {
-      return null;
-    }
-    char ch = input.charAt(pos);
-    Interval interval = languageAlphabets.getInterval(ch);
-    Integer alphaIndex = alphabetIndex.get(interval);
-    if (alphaIndex == null) {
-      return null;
-    }
-    BitSet transitions = transitionTbl[curState][alphaIndex];
-    if (transitions != null) {
-      Optional<Action> action =  transitions.stream()
-                      .mapToObj(nextState -> testRecursive(input, pos + 1, nextState))
-                      .filter(Objects::nonNull)
-                      .findFirst();
-      if (action.isPresent()) {
-        return action.get();
+    BitSet transitions = null;
+    if (pos < input.length()) {
+      char ch = input.charAt(pos);
+      Interval interval = languageAlphabets.getInterval(ch);
+      Integer alphaIndex = alphabetIndex.get(interval);
+      if (alphaIndex == null) {
+        return null;
+      }
+      transitions = transitionTbl[curState][alphaIndex];
+      if (transitions != null) {
+        Optional<Action> action = transitions.stream()
+                .mapToObj(nextState -> testRecursive(input, pos + 1, nextState))
+                .filter(Objects::nonNull)
+                .findFirst();
+        if (action.isPresent()) {
+          return action.get();
+        }
       }
     }
     transitions = transitionTbl[curState][EPSILON_ALPHABET_INDEX];

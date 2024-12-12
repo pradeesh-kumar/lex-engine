@@ -17,5 +17,4 @@ returnType=Token
 "not" { return Token.keyword(Token.Type.NOT); }
 
 # Identifier
-"[A-Z0-9]" { return Token.identifier(value); }
-#"[a-zA-Z0-9_]*" { return Token.identifier(value); }
+"[a-zA-Z0-9_]*" { return Token.identifier(value); }

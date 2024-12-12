@@ -221,13 +221,13 @@ public final class NfaGenerator {
      * @param token the alternate token
      */
     private void applyAlternate(Nfa.NfaState current, RegexToken token) {
-      Nfa.NfaState state = generateInternal();
       if (current == null) {
         Out.error(
             "Invalid regex %s. Contains invalid escape sequence character",
             regexAction.regex().toString());
         throw GeneratorException.error(ErrorType.ERR_REGEX_INVALID);
       }
+      Nfa.NfaState state = generateInternal();
       current.alternate(state);
     }
 
