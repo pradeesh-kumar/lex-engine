@@ -155,4 +155,79 @@ public class DisjointIntSetTest {
     assertEquals(1, set.minVal());
     assertEquals(10, set.maxVal());
   }
+
+  @Test
+  public void testGetInterval_Found() {
+    // Arrange
+    DisjointIntSet disjointIntSet = new DisjointIntSet();
+    disjointIntSet.add(Interval.of(10, 20));
+
+    // Act
+    Interval result = disjointIntSet.getInterval(15);
+
+    // Assert
+    assertNotNull(result);
+    assertEquals(10, result.start());
+    assertEquals(20, result.end());
+  }
+
+  @Test
+  public void testGetInterval_NotFound() {
+    // Arrange
+    DisjointIntSet disjointIntSet = new DisjointIntSet();
+
+    // Act
+    Interval result = disjointIntSet.getInterval(15);
+
+    // Assert
+    assertNull(result);
+  }
+
+  @Test
+  public void testGetInterval_MultipleIntervals() {
+    // Arrange
+    DisjointIntSet disjointIntSet = new DisjointIntSet();
+    disjointIntSet.add(Interval.of(10, 20));
+    disjointIntSet.add(Interval.of(30, 40));
+
+    // Act
+    Interval result1 = disjointIntSet.getInterval(15);
+    Interval result2 = disjointIntSet.getInterval(35);
+
+    // Assert
+    assertNotNull(result1);
+    assertEquals(10, result1.start());
+    assertEquals(20, result1.end());
+
+    assertNotNull(result2);
+    assertEquals(30, result2.start());
+    assertEquals(40, result2.end());
+  }
+
+  @Test
+  public void testGetInterval_ExactMatch() {
+    // Arrange
+    DisjointIntSet disjointIntSet = new DisjointIntSet();
+    disjointIntSet.add(Interval.of(10, 10)); // Single-element interval
+
+    // Act
+    Interval result = disjointIntSet.getInterval(10);
+
+    // Assert
+    assertNotNull(result);
+    assertEquals(10, result.start());
+    assertEquals(10, result.end());
+  }
+
+  @Test
+  public void testGetInterval_NoIntervals() {
+    // Arrange
+    DisjointIntSet disjointIntSet = new DisjointIntSet();
+
+    // Act
+    Interval result = disjointIntSet.getInterval(15);
+
+    // Assert
+    assertNull(result);
+  }
 }

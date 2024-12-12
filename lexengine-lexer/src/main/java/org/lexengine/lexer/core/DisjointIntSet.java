@@ -22,6 +22,16 @@ import java.util.stream.Collectors;
  */
 public class DisjointIntSet {
 
+  private static final Comparator<Interval> INTERVAL_WITHIN_BOUND_COMPARATOR = (i1, i2) -> {
+    if (i2.start() >= i1.start() && i2.end() <= i1.end()) {
+      return 0;
+    }
+    if (i2.start() == i1.start()) {
+      return i1.end() - i2.end();
+    }
+    return i1.start() - i2.start();
+  };
+
   private List<Interval> intervals;
   private boolean disjointed;
   private int minVal;
@@ -29,7 +39,7 @@ public class DisjointIntSet {
 
   /** Constructs an empty DisjointIntSet with default initial capacity. */
   public DisjointIntSet() {
-    this(-1);
+    this(10);
   }
 
   /**
@@ -38,11 +48,7 @@ public class DisjointIntSet {
    * @param initialCapacity the initial capacity of the underlying collection
    */
   public DisjointIntSet(int initialCapacity) {
-    if (initialCapacity < 0) {
-      this.intervals = new ArrayList<>();
-    } else {
-      this.intervals = new ArrayList<>(initialCapacity);
-    }
+    this.intervals = new ArrayList<>(initialCapacity);
     this.minVal = -1;
     this.maxVal = -1;
     this.disjointed = false;
@@ -123,17 +129,15 @@ public class DisjointIntSet {
     return a.stream().filter(Predicate.not(b::contains)).toList();
   }
 
+  /**
+   * Retrieves the interval that contains the specified code point, if such an interval exists in the set.
+   *
+   * @param codePoint the code point to search for
+   * @return the interval containing the code point, or null if no such interval exists
+   */
   public Interval getInterval(int codePoint) {
     Interval key = Interval.of(codePoint, codePoint);
-    int pos = Collections.binarySearch(this.intervals, key, (i1, i2) -> {
-      if (i2.start() >= i1.start() && i2.end() <= i1.end()) {
-        return 0;
-      }
-      if (i2.start() == i1.start()) {
-        return i1.end() - i2.end();
-      }
-      return i1.start() - i2.start();
-    });
+    int pos = Collections.binarySearch(this.intervals, key, INTERVAL_WITHIN_BOUND_COMPARATOR);
     if (pos < 0) {
       return null;
     }
@@ -182,7 +186,7 @@ public class DisjointIntSet {
   public List<Interval> getIntersection(int start, int end) {
     checkAndDoDisjoint();
     Interval key = Interval.of(start, end);
-    int pos = search(key);
+    int pos = Collections.binarySearch(this.intervals, key);
     if (pos < 0) {
       return List.of();
     }
@@ -216,16 +220,6 @@ public class DisjointIntSet {
     if (!disjointed) {
       doDisjoint();
     }
-  }
-
-  /**
-   * Searches for an interval in the set using binary search.
-   *
-   * @param key the interval to search for
-   * @return the index of the found interval, or a negative value indicating its insertion point
-   */
-  private int search(Interval key) {
-    return Collections.binarySearch(this.intervals, key);
   }
 
   /** Merges overlapping intervals in the set, ensuring it remains disjointed. */

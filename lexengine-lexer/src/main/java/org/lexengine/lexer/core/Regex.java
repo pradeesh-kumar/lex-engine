@@ -7,6 +7,7 @@ package org.lexengine.lexer.core;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.lexengine.lexer.error.ErrorType;
 import org.lexengine.lexer.error.GeneratorException;
@@ -19,7 +20,19 @@ public class Regex implements Iterable<RegexToken> {
 
   /** A set of meta-characters used in regular expressions. */
   private static final Set<Character> META_CHARS =
-      Set.of('|', '.', '^', '*', '+', '?', '(', ')', '{', '}', '"');
+      Set.of('|', '.', '^', '*', '+', '?', '(', ')', '{', '}', '[', ']');
+
+  /** Escape sequence mappings **/
+  private static final Map<Character, Character> ESCAPE_CHAR_MAP = Map.of(
+    '\\', '\\',
+    '"', '"',
+    'n', '\n',
+    'r', '\r',
+    't', '\t',
+    ' ', ' ',
+    'b', '\b',
+    'f', '\f'
+  );
 
   /** A set of quantifiers used in regular expressions. */
   private static final Set<Character> QUANTIFIERS = Set.of('*', '+', '?', '{', '}');
@@ -136,15 +149,19 @@ public class Regex implements Iterable<RegexToken> {
       if (literal == '[') {
         return convertCharClasses();
       }
-      if (literal == '\'') {
+      if (literal == '\\') {
+        Character escapeLiteral = ESCAPE_CHAR_MAP.get(peek());
         if (peek() == '\0') {
           Out.error("Invalid regex %s. Contains illegal escape sequence character", val);
           throw GeneratorException.error(ErrorType.ERR_REGEX_INVALID);
-        } else if (!META_CHARS.contains(peek())) {
+        } else if (!META_CHARS.contains(peek()) && escapeLiteral == null) {
           Out.error("Invalid regex %s. Contains invalid escape sequence character", val);
           throw GeneratorException.error(ErrorType.ERR_REGEX_INVALID);
         }
         literal = advance();
+        if (escapeLiteral != null) {
+          literal = escapeLiteral;
+        }
       }
       return RegexToken.ofLiteral(literal, detectQuantifier());
     }
@@ -173,14 +190,23 @@ public class Regex implements Iterable<RegexToken> {
         Out.error("Invalid regex %s", val);
         throw GeneratorException.error(ErrorType.ERR_REGEX_INVALID);
       }
-      if (peek() == '^') {
+      if (literal == '^') {
         inverted = true;
-        advance();
+        literal = advance();
       }
       List<Interval> intervals = new LinkedList<>();
       while (literal != '\0' && literal != ']') {
         if (peek() == '-') {
           intervals.add(parseRange(literal));
+        } else if (literal == '\\') {
+          literal = advance();
+          Character escapedCh = ESCAPE_CHAR_MAP.get(literal);
+          if (escapedCh == null) {
+            Out.error("Invalid regex %s", val);
+            throw GeneratorException.error(ErrorType.ERR_REGEX_INVALID);
+          }
+          literal = escapedCh;
+          intervals.add(Interval.of(literal));
         } else {
           intervals.add(Interval.of(literal));
         }
