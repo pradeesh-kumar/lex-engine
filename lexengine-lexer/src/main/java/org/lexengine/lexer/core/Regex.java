@@ -22,17 +22,17 @@ public class Regex implements Iterable<RegexToken> {
   private static final Set<Character> META_CHARS =
       Set.of('|', '.', '^', '*', '+', '?', '(', ')', '{', '}', '[', ']');
 
-  /** Escape sequence mappings **/
-  private static final Map<Character, Character> ESCAPE_CHAR_MAP = Map.of(
-    '\\', '\\',
-    '"', '"',
-    'n', '\n',
-    'r', '\r',
-    't', '\t',
-    ' ', ' ',
-    'b', '\b',
-    'f', '\f'
-  );
+  /** Escape sequence mappings * */
+  private static final Map<Character, Character> ESCAPE_CHAR_MAP =
+      Map.of(
+          '\\', '\\',
+          '"', '"',
+          'n', '\n',
+          'r', '\r',
+          't', '\t',
+          ' ', ' ',
+          'b', '\b',
+          'f', '\f');
 
   /** A set of quantifiers used in regular expressions. */
   private static final Set<Character> QUANTIFIERS = Set.of('*', '+', '?', '{', '}');

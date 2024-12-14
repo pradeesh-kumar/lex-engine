@@ -21,7 +21,7 @@ public class SpecParserTest {
     SpecParser parser = new SpecParser(testSpecFile);
     LexSpec lexSpec = parser.parseSpec();
 
-    assertEquals(2, lexSpec.regexActionList().size());
+    assertEquals(14, lexSpec.regexActionList().size());
     assertEquals("MyLexer", lexSpec.lexClassName());
     assertEquals("org.lexengine.lexer.generated", lexSpec.lexPackageName());
   }

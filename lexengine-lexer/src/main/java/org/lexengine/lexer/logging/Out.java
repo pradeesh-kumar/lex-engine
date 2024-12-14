@@ -38,6 +38,10 @@ public class Out {
     write(Level.WARN, msg);
   }
 
+  public static void warn(String msg, Object... args) {
+    write(Level.WARN, msg, args);
+  }
+
   public static void error(String msg) {
     write(Level.ERROR, msg);
   }

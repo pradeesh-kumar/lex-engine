@@ -4,10 +4,9 @@
 */
 package org.lexengine.lexer.core;
 
-import org.lexengine.lexer.logging.Out;
-
 import java.io.File;
 import java.util.Map;
+import org.lexengine.lexer.logging.Out;
 
 public class LexerGenerator {
 

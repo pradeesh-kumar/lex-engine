@@ -49,16 +49,8 @@ public class IntervalTest {
 
   @Test
   void testToString() {
-    // Given
-    int start = 10;
-    int end = 20;
-    Interval interval = Interval.of(start, end);
-
-    // When
-    String str = interval.toString();
-
-    // Then
-    assertEquals("(" + start + "-" + end + ")", str);
+    assertEquals("[a-b]", Interval.of(97, 98).toString());
+    assertEquals("a", Interval.of(97, 97).toString());
   }
 
   @Test

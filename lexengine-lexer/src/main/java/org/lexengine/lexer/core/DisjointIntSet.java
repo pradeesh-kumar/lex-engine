@@ -14,23 +14,23 @@ import java.util.stream.Collectors;
  * <p>This class allows you to store and manage multiple intervals of integers, ensuring that they
  * do not overlap with each other. It provides methods for adding individual values or ranges,
  * checking intersections, and retrieving the stored intervals.
- * </p>
+ *
  * <p>Note: This is a lazy disjoint data structure. Which means that, the disjoint operation doesn't
  * happen immediately whenever you add new elements. Rather It happens implicitly when you call the
  * methods getIntersections(), getDifference() and intervals().
- * </p>
  */
 public class DisjointIntSet {
 
-  private static final Comparator<Interval> INTERVAL_WITHIN_BOUND_COMPARATOR = (i1, i2) -> {
-    if (i2.start() >= i1.start() && i2.end() <= i1.end()) {
-      return 0;
-    }
-    if (i2.start() == i1.start()) {
-      return i1.end() - i2.end();
-    }
-    return i1.start() - i2.start();
-  };
+  private static final Comparator<Interval> INTERVAL_WITHIN_BOUND_COMPARATOR =
+      (i1, i2) -> {
+        if (i2.start() >= i1.start() && i2.end() <= i1.end()) {
+          return 0;
+        }
+        if (i2.start() == i1.start()) {
+          return i1.end() - i2.end();
+        }
+        return i1.start() - i2.start();
+      };
 
   private List<Interval> intervals;
   private boolean disjointed;
@@ -130,7 +130,8 @@ public class DisjointIntSet {
   }
 
   /**
-   * Retrieves the interval that contains the specified code point, if such an interval exists in the set.
+   * Retrieves the interval that contains the specified code point, if such an interval exists in
+   * the set.
    *
    * @param codePoint the code point to search for
    * @return the interval containing the code point, or null if no such interval exists

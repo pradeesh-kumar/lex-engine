@@ -35,9 +35,9 @@ public final class LexGenUtils {
    */
   static Map<Interval, Integer> createAlphabetsIndex(List<Interval> intervals) {
     Map<Interval, Integer> alphabetIndex = new HashMap<>(intervals.size());
-    int i = 1;
+    int index = 0;
     for (var interval : intervals) {
-      alphabetIndex.put(interval, i++);
+      alphabetIndex.put(interval, index++);
     }
     return alphabetIndex;
   }

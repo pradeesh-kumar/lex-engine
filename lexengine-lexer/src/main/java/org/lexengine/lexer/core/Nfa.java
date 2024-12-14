@@ -5,9 +5,7 @@
 package org.lexengine.lexer.core;
 
 import java.util.BitSet;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -16,7 +14,6 @@ public class Nfa {
 
   private static final int MAX_STATE_BUFFER = 512;
   private static final int INITIAL_SIZE = 50;
-  private static final int EPSILON_ALPHABET_INDEX = 0;
 
   /**
    * transitionTbl[current_state][next_char] gives the set of states which can be reached from
@@ -31,12 +28,15 @@ public class Nfa {
   private final Map<Integer, Action> actionMap;
   private int statesCount;
   private int startState;
+  private final int epsilonAlphabetIndex;
 
   public Nfa(DisjointIntSet languageAlphabets, Map<Interval, Integer> alphabetIndex) {
     this.languageAlphabets = languageAlphabets;
     this.alphabetIndex = alphabetIndex;
-    this.alphabetSize = languageAlphabets.size() + 1; // +1 extra for epsilon
+    this.alphabetSize = languageAlphabets.size() + 1; // + 1 extra for epsilon
     this.transitionTbl = new BitSet[INITIAL_SIZE][this.alphabetSize];
+    this.epsilonAlphabetIndex =
+        this.alphabetSize - 1; // Last alphabet index is dedicated for epsilon
     this.statesCount = 0;
     this.finalStates = new BitSet();
     this.actionMap = new HashMap<>();
@@ -77,8 +77,53 @@ public class Nfa {
     return startState;
   }
 
+  public int epsilonAlphabetIndex() {
+    return epsilonAlphabetIndex;
+  }
+
   public int statesCount() {
-    return statesCount;
+    return statesCount - 1;
+  }
+
+  public int finalStatesCount() {
+    return finalStates.cardinality();
+  }
+
+  public int alphabetSize() {
+    return alphabetSize - 1; // Excluding epsilon
+  }
+
+  public boolean isFinalState(int state) {
+    return finalStates.get(state);
+  }
+
+  public Action action(int state) {
+    return actionMap.get(state);
+  }
+
+  public DisjointIntSet languageAlphabets() {
+    return languageAlphabets;
+  }
+
+  public Map<Interval, Integer> alphabetIndex() {
+    return alphabetIndex;
+  }
+
+  public BitSet transition(int fromState, int alphabet) {
+    if (fromState < 0 || fromState >= statesCount) {
+      throw new IllegalArgumentException("Invalid fromState: " + fromState);
+    }
+    if (alphabet < 0 || alphabet >= alphabetSize) {
+      throw new IllegalArgumentException("Invalid alphabet: " + alphabet);
+    }
+    return transitionTbl[fromState][alphabet];
+  }
+
+  public BitSet epsilonTransition(int fromState) {
+    if (fromState < 0 || fromState >= statesCount) {
+      throw new IllegalArgumentException("Invalid epsilon transition from: " + fromState);
+    }
+    return transitionTbl[fromState][epsilonAlphabetIndex];
   }
 
   Action test(String input) {
@@ -99,7 +144,8 @@ public class Nfa {
       }
       transitions = transitionTbl[curState][alphaIndex];
       if (transitions != null) {
-        Optional<Action> action = transitions.stream()
+        Optional<Action> action =
+            transitions.stream()
                 .mapToObj(nextState -> testRecursive(input, pos + 1, nextState))
                 .filter(Objects::nonNull)
                 .findFirst();
@@ -108,13 +154,13 @@ public class Nfa {
         }
       }
     }
-    transitions = transitionTbl[curState][EPSILON_ALPHABET_INDEX];
+    transitions = transitionTbl[curState][epsilonAlphabetIndex];
     if (transitions != null) {
       Optional<Action> action =
-              transitions.stream()
-                      .mapToObj(nextState -> testRecursive(input, pos, nextState))
-                      .filter(Objects::nonNull)
-                      .findFirst();
+          transitions.stream()
+              .mapToObj(nextState -> testRecursive(input, pos, nextState))
+              .filter(Objects::nonNull)
+              .findFirst();
       if (action.isPresent()) {
         return action.get();
       }
@@ -150,7 +196,7 @@ public class Nfa {
 
     void concat(NfaState other) {
       finalStates.clear(this.accept);
-      addTransition(this.accept, EPSILON_ALPHABET_INDEX, other.start);
+      addTransition(this.accept, epsilonAlphabetIndex, other.start);
       this.accept = other.accept;
       finalStates.set(this.accept);
       closureDone = false;
@@ -160,8 +206,8 @@ public class Nfa {
     void alternate(NfaState other) {
       if (alternateDone) {
         finalStates.clear(other.accept);
-        addTransition(this.start, EPSILON_ALPHABET_INDEX, other.start);
-        addTransition(other.accept, EPSILON_ALPHABET_INDEX, this.accept);
+        addTransition(this.start, epsilonAlphabetIndex, other.start);
+        addTransition(other.accept, epsilonAlphabetIndex, this.accept);
         return;
       }
 
@@ -171,10 +217,10 @@ public class Nfa {
       int newStart = createState();
       int newAccept = createState();
 
-      addTransition(newStart, EPSILON_ALPHABET_INDEX, this.start);
-      addTransition(newStart, EPSILON_ALPHABET_INDEX, other.start);
-      addTransition(this.accept, EPSILON_ALPHABET_INDEX, newAccept);
-      addTransition(other.accept, EPSILON_ALPHABET_INDEX, newAccept);
+      addTransition(newStart, epsilonAlphabetIndex, this.start);
+      addTransition(newStart, epsilonAlphabetIndex, other.start);
+      addTransition(this.accept, epsilonAlphabetIndex, newAccept);
+      addTransition(other.accept, epsilonAlphabetIndex, newAccept);
 
       this.start = newStart;
       this.accept = newAccept;
@@ -185,12 +231,12 @@ public class Nfa {
 
     NfaState alternateWithoutNewAccept(NfaState other) {
       if (alternateDone) {
-        addTransition(this.start, EPSILON_ALPHABET_INDEX, other.start);
+        addTransition(this.start, epsilonAlphabetIndex, other.start);
         return this;
       }
       int newStart = createState();
-      addTransition(newStart, EPSILON_ALPHABET_INDEX, this.start);
-      addTransition(newStart, EPSILON_ALPHABET_INDEX, other.start);
+      addTransition(newStart, epsilonAlphabetIndex, this.start);
+      addTransition(newStart, epsilonAlphabetIndex, other.start);
       this.start = newStart;
       alternateDone = true;
       return this;
@@ -204,10 +250,10 @@ public class Nfa {
       int newStart = createState();
       int newAccept = createState();
 
-      addTransition(newStart, EPSILON_ALPHABET_INDEX, this.start);
-      addTransition(this.accept, EPSILON_ALPHABET_INDEX, newAccept);
-      addTransition(this.accept, EPSILON_ALPHABET_INDEX, this.start);
-      addTransition(newStart, EPSILON_ALPHABET_INDEX, newAccept);
+      addTransition(newStart, epsilonAlphabetIndex, this.start);
+      addTransition(this.accept, epsilonAlphabetIndex, newAccept);
+      addTransition(this.accept, epsilonAlphabetIndex, this.start);
+      addTransition(newStart, epsilonAlphabetIndex, newAccept);
 
       this.start = newStart;
       this.accept = newAccept;
@@ -222,9 +268,9 @@ public class Nfa {
 
       finalStates.clear(this.accept);
 
-      addTransition(newStart, EPSILON_ALPHABET_INDEX, newAccept);
-      addTransition(newStart, EPSILON_ALPHABET_INDEX, this.start);
-      addTransition(this.accept, EPSILON_ALPHABET_INDEX, newAccept);
+      addTransition(newStart, epsilonAlphabetIndex, newAccept);
+      addTransition(newStart, epsilonAlphabetIndex, this.start);
+      addTransition(this.accept, epsilonAlphabetIndex, newAccept);
 
       finalStates.set(newAccept);
       this.start = newStart;
@@ -237,9 +283,9 @@ public class Nfa {
 
       finalStates.clear(this.accept);
 
-      addTransition(newStart, EPSILON_ALPHABET_INDEX, this.start);
-      addTransition(this.accept, EPSILON_ALPHABET_INDEX, newAccept);
-      addTransition(newStart, EPSILON_ALPHABET_INDEX, newAccept);
+      addTransition(newStart, epsilonAlphabetIndex, this.start);
+      addTransition(this.accept, epsilonAlphabetIndex, newAccept);
+      addTransition(newStart, epsilonAlphabetIndex, newAccept);
 
       finalStates.set(newAccept);
       this.start = newStart;

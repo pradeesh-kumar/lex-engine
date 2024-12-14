@@ -154,7 +154,7 @@ public class RegexTest {
     assertThrows(
         GeneratorException.class,
         () -> {
-          String regexStr = "\'";
+          String regexStr = "\\a";
           Regex regex = Regex.fromString(regexStr);
           regex.iterator().next();
         });

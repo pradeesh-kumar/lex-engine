@@ -14,7 +14,7 @@ import org.lexengine.lexer.logging.Out;
 
 /**
  * Generates an NFA (Non-Deterministic Finite Automaton) from a list of regular expressions and
- * actions.
+ * actions. This uses Thompson construction algorithm to create NFA from the regular expressions.
  */
 public final class NfaGenerator {
 
@@ -49,12 +49,15 @@ public final class NfaGenerator {
    */
   public Nfa generate() {
     Nfa nfa = new Nfa(languageAlphabets, alphabetIndex);
-    Nfa.NfaState state = regexActions.stream()
+    Nfa.NfaState state =
+        regexActions.stream()
             .map(regexAction -> new NfaStateGenerator(regexAction, nfa))
             .map(NfaStateGenerator::generate)
             .reduce(Nfa.NfaState::alternateWithoutNewAccept)
             .get();
-    Out.info("NFA created. Number of states: %d", nfa.statesCount());
+    Out.info(
+        "NFA generated. Num States: %d, Num Final States: %d",
+        nfa.statesCount(), nfa.finalStatesCount());
     nfa.setStartState(state.start());
     return nfa;
   }
