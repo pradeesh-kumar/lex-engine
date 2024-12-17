@@ -22,6 +22,7 @@ public class DfaGeneratorTest {
     assertAction(dfa.test("float"), "{ return Token.keyword(Token.Type.FLOAT); }");
     assertAction(dfa.test("not"), "{ return Token.keyword(Token.Type.NOT); }");
     assertAction(dfa.test("0"), "{ return Token.integer(value); }");
+    assertNull(dfa.test("00"));
     assertAction(dfa.test("9"), "{ return Token.integer(value); }");
     assertAction(dfa.test("123920310"), "{ return Token.integer(value); }");
     assertAction(dfa.test("D"), "{ return Token.identifier(value); }");

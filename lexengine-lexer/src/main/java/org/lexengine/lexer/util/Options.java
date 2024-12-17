@@ -4,10 +4,12 @@
 */
 package org.lexengine.lexer.util;
 
+import org.lexengine.lexer.logging.Out;
+
 import java.io.File;
 import java.nio.charset.Charset;
+import java.nio.file.Path;
 import java.util.Objects;
-import org.lexengine.lexer.logging.Out;
 
 /**
  * Represents command-line options for an application.
@@ -19,6 +21,7 @@ public class Options {
 
   private static final String DEFAULT_SPEC_FILE = "lexer-spec.spec";
   private static final String DEFAULT_OUT_DIR = ".";
+  private static final String DEFAULT_SCANNER_CLASS_FILE = "scanner-class.template";
 
   /** Flag indicating whether to enable verbose mode. */
   public static boolean verbose;
@@ -31,6 +34,9 @@ public class Options {
 
   /** Path to the lexerSpecFile file used by the application. */
   public static File lexerSpecFile;
+
+  /** Scanner class template file. */
+  public static Path scannerClassTemplate;
 
   /** Private constructor to prevent instantiation. */
   private Options() {}
@@ -48,6 +54,7 @@ public class Options {
     lexerSpecFile =
         new File(Objects.requireNonNull(Options.class.getResource(DEFAULT_SPEC_FILE)).getFile());
     outDir = DEFAULT_OUT_DIR;
+    scannerClassTemplate = Path.of(Objects.requireNonNull(Options.class.getResource(DEFAULT_SCANNER_CLASS_FILE)).getFile());
   }
 
   /**

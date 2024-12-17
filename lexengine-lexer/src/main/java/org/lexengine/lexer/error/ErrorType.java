@@ -21,4 +21,13 @@ public enum ErrorType {
 
   /** Invalid regular expression */
   ERR_REGEX_INVALID,
+
+  /** Invalid output directory specified */
+  ERR_OUT_DIR_INVALID,
+
+  /** Error while generating the scanner class */
+  ERR_SCANNER_CLASS_GENERATE,
+
+  /** Error while compressing the transition table */
+  ERR_TRANSITION_TBL_COMPRESSION
 }

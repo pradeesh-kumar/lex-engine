@@ -72,7 +72,7 @@ ${switchCases}
   private int[][] decompress(String base64Data) {
     byte[] compressedData = Base64.getDecoder().decode(base64Data);
     byte[] decompressedData = decompress(compressedData);
-    return deserialize2DArray(decompressedData, STATES_COUNT, ALPHABETS_COUNT);
+    return deserializeInt2DArray(decompressedData, STATES_COUNT, ALPHABETS_COUNT);
   }
 
   private static byte[] decompress(byte[] data) throws IOException {
@@ -88,7 +88,7 @@ ${switchCases}
     }
   }
 
-  private static int[][] deserialize2DArray(byte[] data, int rows, int cols) {
+  private static int[][] deserializeInt2DArray(byte[] data, int rows, int cols) {
     int[][] array = new int[rows][cols];
     ByteBuffer buffer = ByteBuffer.wrap(data);
     for (int i = 0; i < rows; i++) {

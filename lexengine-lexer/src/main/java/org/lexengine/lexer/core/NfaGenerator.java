@@ -14,7 +14,7 @@ import org.lexengine.lexer.logging.Out;
 
 /**
  * Generates an NFA (Non-Deterministic Finite Automaton) from a list of regular expressions and
- * actions. This uses Thompson construction algorithm to create NFA from the regular expressions.
+ * actions. This uses Thompson Construction Algorithm to create NFA from the regular expressions.
  */
 public final class NfaGenerator {
 
@@ -105,7 +105,7 @@ public final class NfaGenerator {
         RegexToken token = regexTknItr.next();
         switch (token.type()) {
           case RegexToken.Type.Literal -> current = applyLiteral(current, token);
-          case RegexToken.Type.LParen -> current = applyLParen(current, token);
+          case RegexToken.Type.LParen -> current = applyLParen(current);
           case RegexToken.Type.RParen -> {
             applyQuantifierIfPresent(current, token);
             return current;
@@ -114,7 +114,7 @@ public final class NfaGenerator {
           case RegexToken.Type.InvertedCharClass ->
               current = applyInvertedCharClass(current, token);
           case RegexToken.Type.Dot -> current = applyDot(current, token);
-          case RegexToken.Type.Bar -> applyAlternate(current, token);
+          case RegexToken.Type.Bar -> applyAlternate(current);
           default -> {
             Out.error("Unrecognized regular expression token %s", token.type());
             throw GeneratorException.error(ErrorType.ERR_REGEX_INVALID);
@@ -128,10 +128,9 @@ public final class NfaGenerator {
      * Applies a left parenthesis token to the current NFA state.
      *
      * @param current the current NFA state
-     * @param token the left parenthesis token
      * @return the updated NFA state
      */
-    private Nfa.NfaState applyLParen(Nfa.NfaState current, RegexToken token) {
+    private Nfa.NfaState applyLParen(Nfa.NfaState current) {
       Nfa.NfaState state = generateInternal();
       if (current == null) {
         return state;
@@ -221,9 +220,8 @@ public final class NfaGenerator {
      * Applies an alternate token to the current NFA state.
      *
      * @param current the current NFA state
-     * @param token the alternate token
      */
-    private void applyAlternate(Nfa.NfaState current, RegexToken token) {
+    private void applyAlternate(Nfa.NfaState current) {
       if (current == null) {
         Out.error(
             "Invalid regex %s. Contains invalid escape sequence character",
