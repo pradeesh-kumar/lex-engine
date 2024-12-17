@@ -61,7 +61,7 @@ public class DfaMinimizer {
   }
 
   /**
-   * Splits a stateSet based if its transition for any alphabet isn't the part of itself.
+   * Splits a stateSet if its transition for any alphabet isn't the part of itself.
    *
    * @param stateSet the partition to be split
    * @return a list of sub-partitions
@@ -72,14 +72,26 @@ public class DfaMinimizer {
       return List.of(stateSet);
     }
     for (int state : states) {
+      boolean noTransition = false;
       for (int c = 0; c < alphabetSize; c++) {
         int transition = dfa.transition(state, c);
-        if (transition != 0 && !stateSet.get(transition)) {
-          stateSet.clear(state);
-          BitSet newStateSet = new BitSet();
-          newStateSet.set(state);
-          return List.of(stateSet, newStateSet);
+        if (transition != 0) {
+          if (!stateSet.get(transition)) {
+            stateSet.clear(state);
+            BitSet newStateSet = new BitSet();
+            newStateSet.set(state);
+            return List.of(stateSet, newStateSet);
+          } else {
+            noTransition = true;
+          }
         }
+      }
+      // If there is any state with no transition at all, then split it.
+      if (!noTransition) {
+        stateSet.clear(state);
+        BitSet newStateSet = new BitSet();
+        newStateSet.set(state);
+        return List.of(stateSet, newStateSet);
       }
     }
     return List.of(stateSet);
@@ -98,6 +110,10 @@ public class DfaMinimizer {
         nonFinalStates.set(s);
       }
     }
+    /*
+     * If there are more than 1 final actions with different states,
+     * then we split them now itself to avoid them being clubbed as a single state
+     */
     Map<Action, List<Integer>> finalStatesByAction =
         finalStates.stream().boxed().collect(Collectors.groupingBy(dfa::action));
     List<BitSet> partitions = new LinkedList<>();
