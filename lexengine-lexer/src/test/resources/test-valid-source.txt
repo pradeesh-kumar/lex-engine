@@ -1,0 +1,23 @@
+package org.test;
+
+import java.util.*;
+
+public class TestSourceCode {
+
+  private static final int TEST_VAR = 0;
+
+  private int length;
+  private int width;
+
+  public TestSourceCode() {
+    this.length = 123;
+    this.width = 93023;
+  }
+
+  public int area() {
+    if (length <= 0 || width < 0 || width >= 100 || length > 300) {
+      throw new RuntimeException("ha ha ha");
+    }
+    return this.length * this.width;
+  }
+}

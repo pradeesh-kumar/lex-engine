@@ -151,7 +151,9 @@ public class DfaMinimizer {
         newStates.put(state, newStateIndex);
         if (dfaFinalState.get(state)) {
           minDfa.addFinalState(newStateIndex, dfa.action(state));
-          Out.debug("MinDfa attaching action to the minDfa final State %d -> %s", newStateIndex, dfa.action(state));
+          Out.debug(
+              "MinDfa attaching action to the minDfa final State %d -> %s",
+              newStateIndex, dfa.action(state));
         }
       }
       ++newStateIndex;

@@ -1,9 +1,10 @@
 package ${package};
 
 import java.io.FileReader;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Stack;
 import java.util.BitSet;
+import java.util.Map;
+import java.util.HashMap;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.util.Base64;
@@ -14,65 +15,120 @@ public class ${className} {
   private static final int STATES_COUNT = ${statesCount};
   private static final int ALPHABETS_COUNT = ${alphabetsCount};
   private static final int START_STATE = ${startState};
-  private static final int SOURCE_BUFFER_SIZE = 1024;
+  private static final int DEFAULT_BUFFER_SIZE = 1024;
 
   private final int[][] transitionTbl;
   private final BitSet finalStates;
-  private final Reader source;
-  private String currentMatch;
-  private int curFinalState;
+  private final Map<Integer, Integer> alphabetIndex;
+  private DynamicCharBuffer buffer;
+  private ${returnType} peek;
+  private int curRow;
+  private int curCol;
 
-  public ${className}(String sourcePath) {
+  public ${className}(String sourcePath) throws FileNotFoundException {
     this(new FileReader(sourcePath));
   }
 
-  public ${className}(Reader source) {
-    this.source = new BufferedReader(source, SOURCE_BUFFER_SIZE);
+  public ${className}(Reader reader) {
+    this.buffer = new DynamicCharBuffer(reader, DEFAULT_BUFFER_SIZE);
+    this.alphabetIndex = loadAlphabetIndex();
     this.finalStates = BitSet.valueOf(new long[] {${finalStates}});
     this.transitionTbl = decompress("${compressedTransitionTbl}");
-  }
-
-  private int advance() {
-    int codePoint;
-    int curSt = START_STATE;
-    Stack<Integer> stStack = new Stack<>();
-    while ((codePoint = source.read()) != -1) {
-      nextSt = this.transitionTbl[curState][codePoint];
-      if (nextSt == 0) {
-        break;
-      }
-    }
-
-
+    this.curRow = -1;
+    this.curCol = -1;
   }
 
   public boolean hasNext() {
-    return peek() != null;
+    if (peek == null) {
+      peek = next();
+    }
+    return peek != null;
   }
 
   public ${returnType} peek() {
-    if (this.curToken == null) {
-
-    }
+    return this.peek;
   }
 
   public ${returnType} ${methodName}() {
+    if (peek != null) {
+      ${returnType} t = peek;
+      peek = null;
+      return t;
+    }
     int state = advance();
     switch (state) {
 ${switchCases}
+      case -1:
+        return null;
+        break;
       default:
         throw new LexerException("Unrecognized state " + state);
     }
   }
 
   public String currentMatch() {
-    return this.currentMatch;
+    return buffer.getStringTillCurrent();
+  }
+
+  public int currentRow() {
+    return this.curRow;
+  }
+
+  public int currentCol() {
+    return this.curCol;
+  }
+
+  private int advance() {
+    if (!buffer.hasNext()) {
+      return -1;
+    }
+    int curSt = START_STATE;
+    Stack<Integer> stStack = new Stack<>();
+    stStack.push(curSt);
+    boolean foundFinalState = finalStates.get(curSt);
+    while (buffer.hasNext()) {
+      char curCh = buffer.next();
+      if (curCh == '\n' || curCh == '\r') {
+        curRow++;
+      } else {
+        curCol++;
+      }
+      Integer index = alphabetIndex.get((int) curCh);
+      if (index == null) {
+        throw new LexerException(String.format("Invalid character '%c' found in the source", curCh));
+      }
+      int nextSt = transitionTbl[curSt][index];
+      if (nextSt == 0) {
+        return lookupFinalState(stStack, foundFinalState);
+      }
+      if (finalStates.get(nextSt)) {
+        foundFinalState = true;
+      }
+      stStack.push(nextSt);
+    }
+    return lookupFinalState(stStack, foundFinalState);
+  }
+
+  private int lookupFinalState(Stack<Integer> stStack, boolean foundFinalState) {
+    if (!foundFinalState) {
+      throw new LexerException(String.format("Cannot resolve symbol '%s'", buffer.getStringTillCurrent()));
+    }
+    while (!finalStates.get(stStack.peek())) {
+      stStack.pop();
+      buffer.prev();
+    }
+    buffer.clearTillCurrent();
+    return stStack.peek();
   }
 
   private int[][] decompress(String base64Data) {
     byte[] compressedData = Base64.getDecoder().decode(base64Data);
-    byte[] decompressedData = decompress(compressedData);
-    return deserialize2DArray(decompressedData, STATES_COUNT, ALPHABETS_COUNT);
+    try {
+      byte[] decompressedData = decompress(compressedData);
+      return deserializeInt2DArray(decompressedData, STATES_COUNT, ALPHABETS_COUNT);
+    } catch (IOException e) {
+      throw new LexerException("Failed to decompress the state", e);
+    }
   }
 
   private static byte[] decompress(byte[] data) throws IOException {
@@ -99,9 +155,113 @@ ${switchCases}
     return array;
   }
 
+  private static Map<Integer, Integer> loadAlphabetIndex() {
+    Map<Integer, Integer> map = new HashMap<>();
+${alphabetIndex}
+    return Map.copyOf(map);
+  }
+
+
   public static class LexerException extends RuntimeException {
     public LexerException(String message) {
       super(message);
+    }
+
+    public LexerException(String message, Throwable cause) {
+      super(message, cause);
+    }
+  }
+}
+
+class DynamicCharBuffer {
+
+  private static final int DEFAULT_BUFFER_SIZE = 256;
+
+  private final Reader reader;
+  private char[] buffer;
+  private int length;
+  private int index;
+  private int startIndex;
+  private boolean eof;
+
+  public DynamicCharBuffer(Reader reader) {
+    this(reader, DEFAULT_BUFFER_SIZE);
+  }
+
+  public DynamicCharBuffer(Reader reader, int initialCapacity) {
+    if (initialCapacity <= 0) {
+      throw new IllegalArgumentException("Capacity must be greater than 0");
+    }
+    this.reader = reader;
+    this.buffer = new char[initialCapacity];
+    this.index = -1;
+    this.startIndex = 0;
+    this.length = 0;
+    this.eof = false;
+    loadBufferIfRequired();
+  }
+
+  public boolean hasNext() {
+    return index < length || !eof;
+  }
+
+  public char next() {
+    if (!hasNext()) {
+      return '\0';
+    }
+    return buffer[index++];
+  }
+
+  public char peek() {
+    if (!hasNext()) {
+      return '\0';
+    }
+    return buffer[index];
+  }
+
+  public int size() {
+    return length;
+  }
+
+  public char prev() {
+    if (index < 0) {
+      return '\0';
+    }
+    return buffer[index--];
+  }
+
+  public void clearTillCurrent() {
+    this.startIndex = index;
+  }
+
+  public String getStringTillCurrent() {
+    return new String(buffer, startIndex, index - startIndex);
+  }
+
+  private void loadBufferIfRequired() {
+    if (eof || index < length) {
+      return;
+    }
+    int newCapacity = length == 0 || startIndex > (length >> 1)? DEFAULT_BUFFER_SIZE : length * 2;
+    char[] newBuffer = new char[newCapacity];
+    System.arraycopy(buffer, startIndex, newBuffer, 0, length - startIndex);
+    this.startIndex = 0;
+    try {
+      int readSize = reader.read(newBuffer, length, buffer.length - length);
+      if (readSize == -1) {
+        eof = true;
+        return;
+      }
+      buffer = newBuffer;
+      length = length + readSize;
+    } catch (IOException e) {
+      throw new DynamicBufferException("Error while reading from buffer!", e);
+    }
+  }
+
+  public static class DynamicBufferException extends RuntimeException {
+    public DynamicBufferException(String message, Exception e) {
+      super(message, e);
     }
   }
 }

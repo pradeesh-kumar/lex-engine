@@ -29,4 +29,4 @@ returnType=Token
 # Integer
 "[0-9]|[1-9][0-9]*" { return Token.integer(value); }
 
-"[\ \t\b\f\r\n]+" { // do nothing }
+"[\ \t\b\f\r\n]+" { /* do nothing */ }

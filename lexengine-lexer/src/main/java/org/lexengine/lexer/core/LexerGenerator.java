@@ -7,7 +7,6 @@ package org.lexengine.lexer.core;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.Map;
-
 import org.lexengine.lexer.error.ErrorType;
 import org.lexengine.lexer.error.GeneratorException;
 import org.lexengine.lexer.logging.Out;
@@ -32,10 +31,13 @@ public class LexerGenerator {
     LexGenUtils.extractAlphabetsFromRegex(lexSpec.regexActionList(), languageAlphabets);
     Out.debug("Language alphabets: " + languageAlphabets);
     this.alphabetIndex = LexGenUtils.createAlphabetsIndex(this.languageAlphabets.intervals());
-    Nfa nfa = new NfaGenerator(lexSpec.regexActionList(), languageAlphabets, alphabetIndex).generate();
+    Nfa nfa =
+        new NfaGenerator(lexSpec.regexActionList(), languageAlphabets, alphabetIndex).generate();
     Dfa dfa = new DfaGenerator(nfa).generate();
     this.dfa = new DfaMinimizer(dfa).minimize();
-    LexClassGenerator lexClassGenerator = new TableBasedLexClassGenerator(dfa, lexSpec, Path.of(Options.outDir), Options.scannerClassTemplate);
+    LexClassGenerator lexClassGenerator =
+        new TableBasedLexClassGenerator(
+            dfa, lexSpec, Path.of(Options.outDir), Options.scannerClassTemplate);
     lexClassGenerator.generate();
   }
 

@@ -37,7 +37,7 @@ public class DfaGeneratorTest {
     assertNull(dfa.test("0121"));
     assertNull(dfa.test("0abc"));
     assertNull(dfa.test("$"));
-    assertAction(dfa.test("\n"), "{ // do nothing }");
+    assertAction(dfa.test("\n"), "{ /* do nothing */ }");
   }
 
   private void assertAction(Action action, String expected) {

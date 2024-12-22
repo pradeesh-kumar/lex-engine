@@ -50,7 +50,7 @@ public class DfaMinimizerTest {
     assertAction(minDfa.test("rat"), "{ return Token.keyword(Token.Type.CATRAT); }");
     assertAction(minDfa.test("<"), "{ return Token.keyword(Token.Type.LESSTHAN); }");
     assertAction(minDfa.test("<="), "{ return Token.keyword(Token.Type.LESSTHANOREQ); }");
-    assertAction(minDfa.test("\n"), "{ // do nothing }");
+    assertAction(minDfa.test("\n"), "{ /* do nothing */ }");
     assertNull(minDfa.test("0abc"));
     assertNull(minDfa.test("$"));
     assertNull(minDfa.test("0121"));

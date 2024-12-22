@@ -4,12 +4,11 @@
 */
 package org.lexengine.lexer.util;
 
-import org.lexengine.lexer.logging.Out;
-
 import java.io.File;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.Objects;
+import org.lexengine.lexer.logging.Out;
 
 /**
  * Represents command-line options for an application.
@@ -54,7 +53,10 @@ public class Options {
     lexerSpecFile =
         new File(Objects.requireNonNull(Options.class.getResource(DEFAULT_SPEC_FILE)).getFile());
     outDir = DEFAULT_OUT_DIR;
-    scannerClassTemplate = Path.of(Objects.requireNonNull(Options.class.getResource(DEFAULT_SCANNER_CLASS_FILE)).getFile());
+    scannerClassTemplate =
+        Path.of(
+            Objects.requireNonNull(Options.class.getResource(DEFAULT_SCANNER_CLASS_FILE))
+                .getFile());
   }
 
   /**

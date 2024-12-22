@@ -40,7 +40,7 @@ public class NfaGeneratorTest {
     assertNull(nfa.test("0121"));
     assertNull(nfa.test("0abc"));
     assertNull(nfa.test("$"));
-    assertAction(nfa.test("\n"), "{ // do nothing }");
+    assertAction(nfa.test("\n"), "{ /* do nothing */ }");
   }
 
   private void assertAction(Action action, String expected) {
