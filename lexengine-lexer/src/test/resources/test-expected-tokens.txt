@@ -1,0 +1,94 @@
+Token: PACKAGE
+Token: IDENTIFIER org
+Token: DOT
+Token: IDENTIFIER test
+Token: SEMICOLON
+Token: IMPORT
+Token: IDENTIFIER java
+Token: DOT
+Token: IDENTIFIER util
+Token: DOT
+Token: MUL
+Token: SEMICOLON
+Token: PUBLIC
+Token: CLASS
+Token: IDENTIFIER TestSourceCode
+Token: OPEN_BRACE
+Token: PRIVATE
+Token: STATIC
+Token: FINAL
+Token: INT
+Token: IDENTIFIER TEST_VAR
+Token: EQ
+Token: INTEGER 0
+Token: SEMICOLON
+Token: PRIVATE
+Token: INT
+Token: IDENTIFIER length
+Token: SEMICOLON
+Token: PRIVATE
+Token: INT
+Token: IDENTIFIER width
+Token: SEMICOLON
+Token: PUBLIC
+Token: IDENTIFIER TestSourceCode
+Token: OPEN_PAREN
+Token: CLOSE_PAREN
+Token: OPEN_BRACE
+Token: THIS
+Token: DOT
+Token: IDENTIFIER length
+Token: EQ
+Token: INTEGER 123
+Token: SEMICOLON
+Token: THIS
+Token: DOT
+Token: IDENTIFIER width
+Token: EQ
+Token: INTEGER 93023
+Token: SEMICOLON
+Token: CLOSE_BRACE
+Token: PUBLIC
+Token: INT
+Token: IDENTIFIER area
+Token: OPEN_PAREN
+Token: CLOSE_PAREN
+Token: OPEN_BRACE
+Token: IF
+Token: OPEN_PAREN
+Token: IDENTIFIER length
+Token: LESSEQ
+Token: INTEGER 0
+Token: DOUBLE_OR
+Token: IDENTIFIER width
+Token: LESS
+Token: INTEGER 0
+Token: DOUBLE_OR
+Token: IDENTIFIER width
+Token: GREATEREQ
+Token: INTEGER 100
+Token: DOUBLE_OR
+Token: IDENTIFIER length
+Token: GREATER
+Token: INTEGER 300
+Token: CLOSE_PAREN
+Token: OPEN_BRACE
+Token: THROW
+Token: NEW
+Token: IDENTIFIER RuntimeException
+Token: OPEN_PAREN
+Token: STRING "ha ha ha"
+Token: CLOSE_PAREN
+Token: SEMICOLON
+Token: CLOSE_BRACE
+Token: IDENTIFIER return
+Token: THIS
+Token: DOT
+Token: IDENTIFIER length
+Token: MUL
+Token: THIS
+Token: DOT
+Token: IDENTIFIER width
+Token: SEMICOLON
+Token: CLOSE_BRACE
+Token: CLOSE_BRACE

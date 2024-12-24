@@ -44,11 +44,12 @@ public class Token {
   }
 
   private String strVal;
-  private int intVal;
+  private Integer intVal;
   private Type type;
 
   public static Token identifier(String identifier) {
     Token token = new Token();
+    token.strVal = identifier;
     token.type = Type.IDENTIFIER;
     return token;
   }
@@ -77,7 +78,18 @@ public class Token {
     return strVal;
   }
 
-  public int intVal() {
+  public Integer intVal() {
     return intVal;
+  }
+
+  @Override
+  public String toString() {
+    if (strVal == null && intVal == null) {
+      return String.format("Token: %s", type);
+    } else if (strVal != null) {
+      return String.format("Token: %s %s", type, strVal);
+    } else {
+      return String.format("Token: %s %d", type, intVal);
+    }
   }
 }

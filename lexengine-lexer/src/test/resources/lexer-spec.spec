@@ -22,6 +22,7 @@ returnType=Token
 "cat|rat" { return Token.keyword(Token.Type.CATRAT); }
 "<" { return Token.keyword(Token.Type.LESSTHAN); }
 "<=" { return Token.keyword(Token.Type.LESSTHANOREQ); }
+"\"[a-zA-Z0-9 ]*\"" { return Token.string(value()); }
 
 # Identifier
 "[a-zA-Z_][a-zA-Z0-9_]*" { return Token.identifier(value); }

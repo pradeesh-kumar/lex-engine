@@ -36,11 +36,11 @@ public class DynamicCharBuffer {
   }
 
   public boolean hasNext() {
+    loadBufferIfRequired();
     return index < length || !eof;
   }
 
   public char next() {
-    loadBufferIfRequired();
     if (!hasNext()) {
       return '\0';
     }
@@ -62,7 +62,7 @@ public class DynamicCharBuffer {
     if (index < 0) {
       return '\0';
     }
-    return buffer[index--];
+    return buffer[--index];
   }
 
   public void clearTillCurrent() {
@@ -83,12 +83,15 @@ public class DynamicCharBuffer {
       buffer = newBuffer;
     } else {
       System.arraycopy(buffer, startIndex, newBuffer, 0, length - startIndex);
+      length -= startIndex;
+      index -= startIndex;
+      startIndex = 0;
     }
-    this.startIndex = 0;
     try {
       int readSize = reader.read(newBuffer, length, buffer.length - length);
       if (readSize == -1) {
         eof = true;
+        reader.close();
         return;
       }
       buffer = newBuffer;
@@ -104,3 +107,4 @@ public class DynamicCharBuffer {
     }
   }
 }
+

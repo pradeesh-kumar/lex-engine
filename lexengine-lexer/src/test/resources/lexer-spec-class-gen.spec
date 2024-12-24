@@ -30,7 +30,7 @@ returnType=Token
 "\{" { return Token.of(Token.Type.OPEN_BRACE); }
 "\}" { return Token.of(Token.Type.CLOSE_BRACE); }
 ";" { return Token.of(Token.Type.SEMICOLON); }
-"\"[a-bA-Z0-9 ]*\"" { return Token.string(value()); }
+"\"[a-zA-Z0-9 ]*\"" { return Token.string(value()); }
 
 "=" { return Token.of(Token.Type.EQ); }
 "\|" { return Token.of(Token.Type.OR); }

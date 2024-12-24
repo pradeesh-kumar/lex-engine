@@ -22,6 +22,7 @@ public class ${className} {
   private final Map<Integer, Integer> alphabetIndex;
   private final DynamicCharBuffer buffer;
   private ${returnType} peek;
+  private String value;
   private int curRow;
   private int curCol;
 
@@ -55,17 +56,20 @@ public class ${className} {
       peek = null;
       return t;
     }
-    int state = advance();
-    switch (state) {
+    int state = 0;
+    do {
+      state = advance();
+      switch (state) {
 ${switchCases}
-      case -1 -> { return null; }
-      default -> throw new LexerException("Unrecognized state " + state);
-    }
-    throw new LexerException("Unrecognized state " + state);
+        case -1 -> { return null; }
+        default -> throw new LexerException("Unrecognized state " + state);
+      }
+    } while (state != -1);
+    return null;
   }
 
   public String value() {
-    return buffer.getStringTillCurrent();
+    return this.value;
   }
 
   public int currentRow() {
@@ -96,13 +100,14 @@ ${switchCases}
         throw new LexerException(String.format("Invalid character '%c' found in the source", curCh));
       }
       int nextSt = transitionTbl[curSt][index];
+      stStack.push(nextSt);
       if (nextSt == 0) {
         return lookupFinalState(stStack, foundFinalState);
       }
       if (finalStates.get(nextSt)) {
         foundFinalState = true;
       }
-      stStack.push(nextSt);
+      curSt = nextSt;
     }
     return lookupFinalState(stStack, foundFinalState);
   }
@@ -115,6 +120,7 @@ ${switchCases}
       stStack.pop();
       buffer.prev();
     }
+    this.value = buffer.getStringTillCurrent();
     buffer.clearTillCurrent();
     return stStack.peek();
   }
@@ -191,7 +197,7 @@ class DynamicCharBuffer {
       throw new IllegalArgumentException("Capacity must be greater than 0");
     }
     this.reader = reader;
-    this.buffer = new char[initialCapacity];
+    this.buffer = null;
     this.index = 0;
     this.startIndex = 0;
     this.length = 0;
@@ -200,6 +206,7 @@ class DynamicCharBuffer {
   }
 
   public boolean hasNext() {
+    loadBufferIfRequired();
     return index < length || !eof;
   }
 
@@ -225,7 +232,7 @@ class DynamicCharBuffer {
     if (index < 0) {
       return '\0';
     }
-    return buffer[index--];
+    return buffer[--index];
   }
 
   public void clearTillCurrent() {
@@ -240,14 +247,21 @@ class DynamicCharBuffer {
     if (eof || index < length) {
       return;
     }
-    int newCapacity = length == 0 || startIndex > (length >> 1)? DEFAULT_BUFFER_SIZE : length * 2;
+    int newCapacity = length == 0 || startIndex > (length >> 1) ? DEFAULT_BUFFER_SIZE : length * 2;
     char[] newBuffer = new char[newCapacity];
-    System.arraycopy(buffer, startIndex, newBuffer, 0, length - startIndex);
-    this.startIndex = 0;
+    if (buffer == null) {
+      buffer = newBuffer;
+    } else {
+      System.arraycopy(buffer, startIndex, newBuffer, 0, length - startIndex);
+      length -= startIndex;
+      index -= startIndex;
+      startIndex = 0;
+    }
     try {
       int readSize = reader.read(newBuffer, length, buffer.length - length);
       if (readSize == -1) {
         eof = true;
+        reader.close();
         return;
       }
       buffer = newBuffer;

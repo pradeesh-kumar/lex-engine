@@ -4,8 +4,12 @@
 */
 package org.lexengine.lexer.core;
 
-import java.io.*;
-import java.nio.ByteBuffer;
+import org.lexengine.lexer.error.ErrorType;
+import org.lexengine.lexer.error.GeneratorException;
+import org.lexengine.lexer.logging.Out;
+
+import java.io.FileWriter;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -13,10 +17,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.zip.GZIPOutputStream;
-import org.lexengine.lexer.error.ErrorType;
-import org.lexengine.lexer.error.GeneratorException;
-import org.lexengine.lexer.logging.Out;
 
 public interface LexClassGenerator {
   void generate();
@@ -84,32 +84,14 @@ class TableBasedLexClassGenerator implements LexClassGenerator {
 
   private String getCompressedTransitionTbl() {
     int[][] transitionTbl = dfa.transitionTbl();
-    byte[] serializedData = serialize2DArray(transitionTbl);
+    byte[] serializedData = LexGenUtils.serialize2DArray(transitionTbl);
     try {
-      byte[] compressedData = compress(serializedData);
+      byte[] compressedData = LexGenUtils.compress(serializedData);
       return Base64.getEncoder().encodeToString(compressedData);
     } catch (IOException e) {
       Out.error("Error while compressing the transition table!", e);
       throw GeneratorException.error(ErrorType.ERR_SCANNER_CLASS_GENERATE);
     }
-  }
-
-  private static byte[] serialize2DArray(int[][] array) {
-    ByteBuffer buffer = ByteBuffer.allocate(array.length * array[0].length * 4);
-    for (int[] row : array) {
-      for (int value : row) {
-        buffer.putInt(value);
-      }
-    }
-    return buffer.array();
-  }
-
-  private static byte[] compress(byte[] data) throws IOException {
-    ByteArrayOutputStream byteStream = new ByteArrayOutputStream(data.length);
-    try (GZIPOutputStream gzipOS = new GZIPOutputStream(byteStream)) {
-      gzipOS.write(data);
-    }
-    return byteStream.toByteArray();
   }
 
   private String getFinalStates() {
@@ -120,7 +102,7 @@ class TableBasedLexClassGenerator implements LexClassGenerator {
 
   private String getFinalStateSwitchCases() {
     Map<Integer, Action> actions = dfa.actions();
-    String caseFormat = "      case %s -> %s";
+    String caseFormat = "        case %s -> %s";
     Set<Map.Entry<Action, List<Map.Entry<Integer, Action>>>> reverse =
         actions.entrySet().stream().collect(Collectors.groupingBy(Map.Entry::getValue)).entrySet();
 

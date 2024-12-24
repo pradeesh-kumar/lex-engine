@@ -37,6 +37,7 @@ public class NfaGeneratorTest {
     assertAction(nfa.test("rat"), "{ return Token.keyword(Token.Type.CATRAT); }");
     assertAction(nfa.test("<"), "{ return Token.keyword(Token.Type.LESSTHAN); }");
     assertAction(nfa.test("<="), "{ return Token.keyword(Token.Type.LESSTHANOREQ); }");
+    assertAction(nfa.test("\"Hello World\""), "{ return Token.string(value()); }");
     assertNull(nfa.test("0121"));
     assertNull(nfa.test("0abc"));
     assertNull(nfa.test("$"));

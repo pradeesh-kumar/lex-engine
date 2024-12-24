@@ -151,18 +151,17 @@ public class Regex implements Iterable<RegexToken> {
       }
       boolean escaped = false;
       if (literal == '\\') {
-        Character escapeLiteral = ESCAPE_CHAR_MAP.get(peek());
-        if (peek() == '\0') {
+        char next = advance();
+        if (next == '\0') {
           Out.error("Invalid regex \"%s\" Contains illegal escape sequence character", val);
           throw GeneratorException.error(ErrorType.ERR_REGEX_INVALID);
-        } else if (!META_CHARS.contains(peek()) && escapeLiteral == null) {
+        }
+        Character escapeLiteral = ESCAPE_CHAR_MAP.get(next);
+        if (!META_CHARS.contains(next) && escapeLiteral == null) {
           Out.error("Invalid regex \"%s\" Contains invalid escape sequence character", val);
           throw GeneratorException.error(ErrorType.ERR_REGEX_INVALID);
         }
-        literal = advance();
-        if (escapeLiteral != null) {
-          literal = escapeLiteral;
-        }
+        literal = escapeLiteral != null ? escapeLiteral : next;
         escaped = true;
       }
       return RegexToken.ofLiteral(literal, detectQuantifier(), escaped);

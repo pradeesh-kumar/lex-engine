@@ -34,10 +34,11 @@ public class DfaGeneratorTest {
     assertAction(dfa.test("rat"), "{ return Token.keyword(Token.Type.CATRAT); }");
     assertAction(dfa.test("<"), "{ return Token.keyword(Token.Type.LESSTHAN); }");
     assertAction(dfa.test("<="), "{ return Token.keyword(Token.Type.LESSTHANOREQ); }");
+    assertAction(dfa.test("\"Hello World\""), "{ return Token.string(value()); }");
+    assertAction(dfa.test("\n"), "{ /* do nothing */ }");
     assertNull(dfa.test("0121"));
     assertNull(dfa.test("0abc"));
     assertNull(dfa.test("$"));
-    assertAction(dfa.test("\n"), "{ /* do nothing */ }");
   }
 
   private void assertAction(Action action, String expected) {

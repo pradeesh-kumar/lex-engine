@@ -139,6 +139,7 @@ public class DfaMinimizer {
    */
   private Dfa createMinDfa(List<BitSet> partitions) {
     Dfa minDfa = new Dfa(partitions.size(), dfa.languageAlphabets(), dfa.alphabetIndex());
+    minDfa.createState(); // For phi-state
     for (int i = 0; i < partitions.size(); i++) {
       minDfa.createState();
     }
