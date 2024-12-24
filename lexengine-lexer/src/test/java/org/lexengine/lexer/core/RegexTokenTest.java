@@ -27,7 +27,7 @@ public class RegexTokenTest {
   @Test
   void testOfLiteral_WithQuantifier_LiteralTokenCreated() {
     // Arrange & Act
-    RegexToken token = RegexToken.ofLiteral('a', '*');
+    RegexToken token = RegexToken.ofLiteral('a', '*', false);
 
     // Assert
     assertEquals(RegexToken.Type.Literal, token.type());

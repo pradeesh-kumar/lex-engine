@@ -27,8 +27,8 @@ public class DynamicCharBuffer {
       throw new IllegalArgumentException("Capacity must be greater than 0");
     }
     this.reader = reader;
-    this.buffer = new char[initialCapacity];
-    this.index = -1;
+    this.buffer = null;
+    this.index = 0;
     this.startIndex = 0;
     this.length = 0;
     this.eof = false;
@@ -40,6 +40,7 @@ public class DynamicCharBuffer {
   }
 
   public char next() {
+    loadBufferIfRequired();
     if (!hasNext()) {
       return '\0';
     }
@@ -76,9 +77,13 @@ public class DynamicCharBuffer {
     if (eof || index < length) {
       return;
     }
-    int newCapacity = length == 0 || startIndex > (length >> 1)? DEFAULT_BUFFER_SIZE : length * 2;
+    int newCapacity = length == 0 || startIndex > (length >> 1) ? DEFAULT_BUFFER_SIZE : length * 2;
     char[] newBuffer = new char[newCapacity];
-    System.arraycopy(buffer, startIndex, newBuffer, 0, length - startIndex);
+    if (buffer == null) {
+      buffer = newBuffer;
+    } else {
+      System.arraycopy(buffer, startIndex, newBuffer, 0, length - startIndex);
+    }
     this.startIndex = 0;
     try {
       int readSize = reader.read(newBuffer, length, buffer.length - length);

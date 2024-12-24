@@ -149,21 +149,23 @@ public class Regex implements Iterable<RegexToken> {
       if (literal == '[') {
         return convertCharClasses();
       }
+      boolean escaped = false;
       if (literal == '\\') {
         Character escapeLiteral = ESCAPE_CHAR_MAP.get(peek());
         if (peek() == '\0') {
-          Out.error("Invalid regex %s. Contains illegal escape sequence character", val);
+          Out.error("Invalid regex \"%s\" Contains illegal escape sequence character", val);
           throw GeneratorException.error(ErrorType.ERR_REGEX_INVALID);
         } else if (!META_CHARS.contains(peek()) && escapeLiteral == null) {
-          Out.error("Invalid regex %s. Contains invalid escape sequence character", val);
+          Out.error("Invalid regex \"%s\" Contains invalid escape sequence character", val);
           throw GeneratorException.error(ErrorType.ERR_REGEX_INVALID);
         }
         literal = advance();
         if (escapeLiteral != null) {
           literal = escapeLiteral;
         }
+        escaped = true;
       }
-      return RegexToken.ofLiteral(literal, detectQuantifier());
+      return RegexToken.ofLiteral(literal, detectQuantifier(), escaped);
     }
 
     /**
@@ -202,7 +204,7 @@ public class Regex implements Iterable<RegexToken> {
           literal = advance();
           Character escapedCh = ESCAPE_CHAR_MAP.get(literal);
           if (escapedCh == null) {
-            Out.error("Invalid regex %s", val);
+            Out.error("Invalid regex \"%s\"", val);
             throw GeneratorException.error(ErrorType.ERR_REGEX_INVALID);
           }
           literal = escapedCh;

@@ -49,7 +49,7 @@ public class RegexToken {
    * @return a new RegexToken instance
    */
   public static RegexToken ofLiteral(char literal) {
-    return ofLiteral(literal, '\0');
+    return ofLiteral(literal, '\0', false);
   }
 
   /**
@@ -59,12 +59,12 @@ public class RegexToken {
    * @param quantifier the quantifier to apply to the token, or '\0' for no quantifier
    * @return a new RegexToken instance
    */
-  public static RegexToken ofLiteral(char literal, char quantifier) {
+  public static RegexToken ofLiteral(char literal, char quantifier, boolean escaped) {
     RegexToken token = new RegexToken();
     token.quantifier = quantifier;
     token.chVal = literal;
     token.interval = Interval.of(literal);
-    token.type =
+    token.type = escaped ? Type.Literal :
         switch (literal) {
           case '(' -> Type.LParen;
           case ')' -> Type.RParen;

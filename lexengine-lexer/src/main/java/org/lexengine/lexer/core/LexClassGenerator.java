@@ -27,6 +27,7 @@ class TableBasedLexClassGenerator implements LexClassGenerator {
   private static final Pattern PLACEHOLDER_PATTERN = Pattern.compile("\\$\\{(\\w+)}");
   private static final String COMMA = ", ";
   private static final char NEW_LINE = '\n';
+  private static final String NEW_LINE_STR = System.lineSeparator();
 
   private final Dfa dfa;
   private final LexSpec lexSpec;
@@ -54,7 +55,6 @@ class TableBasedLexClassGenerator implements LexClassGenerator {
     context.put("alphabetsCount", String.valueOf(dfa.alphabetSize()));
     context.put("switchCases", getFinalStateSwitchCases());
     context.put("alphabetIndex", getAlphabetIndex());
-
 
     Path outFile = outDir.resolve(lexSpec.lexClassName() + ".java");
     try (FileWriter outWriter = new FileWriter(outFile.toFile());
@@ -120,27 +120,15 @@ class TableBasedLexClassGenerator implements LexClassGenerator {
 
   private String getFinalStateSwitchCases() {
     Map<Integer, Action> actions = dfa.actions();
-    StringBuilder switchCases = new StringBuilder();
-    String caseFormat = "      case %d:";
-    String brk = "        break;";
-    String actionIndent = "        ";
+    String caseFormat = "      case %s -> %s";
     Set<Map.Entry<Action, List<Map.Entry<Integer, Action>>>> reverse =
         actions.entrySet().stream().collect(Collectors.groupingBy(Map.Entry::getValue)).entrySet();
-    for (Map.Entry<Action, List<Map.Entry<Integer, Action>>> entry : reverse) {
-      String cases =
-          entry.getValue().stream()
-              .map(val -> String.format(caseFormat, val.getKey()))
-              .collect(Collectors.joining("\n"));
-      switchCases
-          .append(cases)
-          .append(NEW_LINE)
-          .append(actionIndent)
-          .append(entry.getKey())
-          .append(NEW_LINE)
-          .append(brk)
-          .append(NEW_LINE);
-    }
-    return switchCases.toString();
+
+    String cases = reverse.stream().map(e -> {
+      String caseValues = e.getValue().stream().map(Map.Entry::getKey).map(String::valueOf).collect(Collectors.joining(", "));
+      return String.format(caseFormat, caseValues, e.getKey().toString());
+    }).collect(Collectors.joining(NEW_LINE_STR));
+    return cases;
   }
 
   private String getAlphabetIndex() {

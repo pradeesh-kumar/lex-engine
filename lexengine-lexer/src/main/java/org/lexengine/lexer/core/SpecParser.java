@@ -8,6 +8,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.function.Predicate;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import org.lexengine.lexer.error.ErrorType;
 import org.lexengine.lexer.error.GeneratorException;
@@ -112,6 +114,9 @@ public class SpecParser {
     }
   }
 
+  private static final Pattern REGEX_PATTERN = Pattern.compile("\".*\"");
+  private static final Pattern ACTION_PATTERN = Pattern.compile("[{].*[}]");
+
   /**
    * Parses a regular expression line from the lexer spec file.
    *
@@ -119,24 +124,17 @@ public class SpecParser {
    * @throws GeneratorException if the line is invalid
    */
   private void parseRegex(String line) {
-    int firstQuote = line.indexOf('\"');
-    int lastQuote = line.indexOf('\"', firstQuote + 1);
-    if (firstQuote == -1 || lastQuote == -1) {
+    Matcher regexMatcher = REGEX_PATTERN.matcher(line);
+    if (!regexMatcher.find()) {
       Out.error("Invalid regex line: '%s' in the lexer spec file!", line);
-      throw GeneratorException.error(ErrorType.ERR_REGEX_ERR);
     }
-    String regexStr = line.substring(firstQuote + 1, lastQuote);
-    if (regexStr.isBlank()) {
-      Out.error("Invalid regex line: '%s' in the lexer spec file!", line);
-      throw GeneratorException.error(ErrorType.ERR_REGEX_ERR);
+    String regexStr = regexMatcher.group();
+    Regex regex = Regex.fromString(regexStr.substring(1, regexStr.length() - 1));
+    Matcher actionMatcher = ACTION_PATTERN.matcher(line.substring(regexStr.length()));
+    if (!actionMatcher.find()) {
+      Out.error("Invalid action line: '%s' in the lexer spec file!", line);
     }
-    if (lastQuote + 1 >= line.length()) {
-      Out.error("Invalid regex line: '%s' in the lexer spec file!", line);
-      throw GeneratorException.error(ErrorType.ERR_REGEX_ERR);
-    }
-    String actionStr = line.substring(lastQuote + 1);
-    Regex regex = Regex.fromString(regexStr);
-    Action action = new Action(actionStr.trim());
+    Action action = new Action(actionMatcher.group());
     specBuilder.addRegexAction(new RegexAction(regex, action));
   }
 }

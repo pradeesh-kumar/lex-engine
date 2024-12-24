@@ -20,7 +20,7 @@ public class ${className} {
   private final int[][] transitionTbl;
   private final BitSet finalStates;
   private final Map<Integer, Integer> alphabetIndex;
-  private DynamicCharBuffer buffer;
+  private final DynamicCharBuffer buffer;
   private ${returnType} peek;
   private int curRow;
   private int curCol;
@@ -58,15 +58,13 @@ public class ${className} {
     int state = advance();
     switch (state) {
 ${switchCases}
-      case -1:
-        return null;
-        break;
-      default:
-        throw new LexerException("Unrecognized state " + state);
+      case -1 -> { return null; }
+      default -> throw new LexerException("Unrecognized state " + state);
     }
+    throw new LexerException("Unrecognized state " + state);
   }
 
-  public String currentMatch() {
+  public String value() {
     return buffer.getStringTillCurrent();
   }
 
@@ -125,7 +123,7 @@ ${switchCases}
     byte[] compressedData = Base64.getDecoder().decode(base64Data);
     try {
       byte[] decompressedData = decompress(compressedData);
-      return deserializeInt2DArray(decompressedData, STATES_COUNT, ALPHABETS_COUNT);
+      return deserialize2DArray(decompressedData, STATES_COUNT, ALPHABETS_COUNT);
     } catch (IOException e) {
       throw new LexerException("Failed to decompress the state", e);
     }
@@ -194,7 +192,7 @@ class DynamicCharBuffer {
     }
     this.reader = reader;
     this.buffer = new char[initialCapacity];
-    this.index = -1;
+    this.index = 0;
     this.startIndex = 0;
     this.length = 0;
     this.eof = false;
