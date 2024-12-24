@@ -10,26 +10,83 @@ import java.nio.ByteBuffer;
 import java.util.Base64;
 import java.util.zip.GZIPInputStream;
 
+/**
+ * A lexer implementation that tokenizes input from a given source path or reader.
+ */
 public class ${className} {
 
+  /**
+   * Number of states used in the finite state machine.
+   */
   private static final int STATES_COUNT = ${statesCount};
+
+  /**
+   * Number of alphabets used in the finite state machine.
+   */
   private static final int ALPHABETS_COUNT = ${alphabetsCount};
+
+  /**
+   * Starting state of the finite state machine.
+   */
   private static final int START_STATE = ${startState};
+
+  /**
+   * Default buffer size for reading input.
+   */
   private static final int DEFAULT_BUFFER_SIZE = 1024;
 
   private final int[][] transitionTbl;
+
+  /**
+   * Set of final states in the finite state machine.
+   */
   private final BitSet finalStates;
+
+  /**
+   * Mapping of characters to their corresponding indices in the alphabet.
+   */
   private final Map<Integer, Integer> alphabetIndex;
+
+  /**
+   * Buffer for reading input.
+   */
   private final DynamicCharBuffer buffer;
+
+  /**
+   * Peeked token.
+   */
   private ${returnType} peek;
+
+  /**
+   * Value associated with the current token.
+   */
   private String value;
+
+  /**
+   * Current row number in the source.
+   */
   private int curRow;
+
+  /**
+   * Current column number in the source.
+   */
   private int curCol;
 
+  /**
+   * Constructs a new lexer instance from a file path.
+   *
+   * @param sourcePath path to the input file
+   * @throws FileNotFoundException if the file does not exist
+   */
   public ${className}(String sourcePath) throws FileNotFoundException {
     this(new FileReader(sourcePath));
   }
 
+  /**
+   * Constructs a new lexer instance from a reader.
+   *
+   * @param reader input reader
+   */
   public ${className}(Reader reader) {
     this.buffer = new DynamicCharBuffer(reader, DEFAULT_BUFFER_SIZE);
     this.alphabetIndex = loadAlphabetIndex();
@@ -39,6 +96,11 @@ public class ${className} {
     this.curCol = -1;
   }
 
+  /**
+   * Checks if there are more tokens available.
+   *
+   * @return true if there are more tokens, false otherwise
+   */
   public boolean hasNext() {
     if (peek == null) {
       peek = next();
@@ -46,36 +108,59 @@ public class ${className} {
     return peek != null;
   }
 
+  /**
+   * Returns the next token without consuming it.
+   *
+   * @return the next token, or null if none available
+   */
   public ${returnType} peek() {
     return this.peek;
   }
 
+  /**
+   * Returns the next token and consumes it.
+   *
+   * @return the next token, or null if none available
+   */
   public ${returnType} ${methodName}() {
     if (peek != null) {
       ${returnType} t = peek;
       peek = null;
       return t;
     }
-    int state = 0;
     do {
-      state = advance();
+      int state = advance();
       switch (state) {
 ${switchCases}
         case -1 -> { return null; }
         default -> throw new LexerException("Unrecognized state " + state);
       }
-    } while (state != -1);
-    return null;
+    } while (true);
   }
 
+  /**
+   * Returns the value associated with the current token.
+   *
+   * @return the token value
+   */
   public String value() {
     return this.value;
   }
 
+  /**
+   * Returns the current row number.
+   *
+   * @return the current row number
+   */
   public int currentRow() {
     return this.curRow;
   }
 
+  /**
+   * Returns the current column number.
+   *
+   * @return the current column number
+   */
   public int currentCol() {
     return this.curCol;
   }
@@ -100,6 +185,7 @@ ${switchCases}
         throw new LexerException(String.format("Invalid character '%c' found in the source", curCh));
       }
       int nextSt = transitionTbl[curSt][index];
+      if (finalStates.get(nextSt)) stStack.clear();
       stStack.push(nextSt);
       if (nextSt == 0) {
         return lookupFinalState(stStack, foundFinalState);
@@ -118,7 +204,7 @@ ${switchCases}
     }
     while (!finalStates.get(stStack.peek())) {
       stStack.pop();
-      buffer.prev();
+      buffer.rollback();
     }
     this.value = buffer.getStringTillCurrent();
     buffer.clearTillCurrent();
@@ -166,6 +252,9 @@ ${alphabetIndex}
   }
 
 
+  /**
+   * Exception thrown when an error occurs during lexing.
+   */
   public static class LexerException extends RuntimeException {
     public LexerException(String message) {
       super(message);
@@ -177,25 +266,73 @@ ${alphabetIndex}
   }
 }
 
+/**
+ * A dynamic character buffer that reads characters from an underlying {@link Reader} and stores them in a
+ * dynamically-sized array. This allows for efficient reading and manipulation of large amounts of text data.
+ */
 class DynamicCharBuffer {
 
+  /**
+   * Default initial capacity of the buffer.
+   */
   private static final int DEFAULT_BUFFER_SIZE = 256;
 
+  /**
+   * Underlying reader providing the source of characters.
+   */
   private final Reader reader;
+
+  /**
+   * Current buffer holding the characters.
+   */
   private char[] buffer;
+
+  /**
+   * Number of valid characters currently stored in the buffer.
+   */
   private int length;
+
+  /**
+   * Index into the buffer where the next character will be returned from.
+   */
   private int index;
+
+  /**
+   * Starting index within the buffer where the current "window" begins.
+   */
   private int startIndex;
+
+  /**
+   * Flag indicating whether the end-of-file has been reached on the underlying reader.
+   */
   private boolean eof;
 
+  /**
+   * Initial capacity specified when creating the buffer.
+   */
+  private final int initialCapacity;
+
+  /**
+   * Constructs a new DynamicCharBuffer instance with the default initial capacity.
+   *
+   * @param reader the underlying reader to read characters from
+   */
   public DynamicCharBuffer(Reader reader) {
     this(reader, DEFAULT_BUFFER_SIZE);
   }
 
+  /**
+   * Constructs a new DynamicCharBuffer instance with the specified initial capacity.
+   *
+   * @param reader         the underlying reader to read characters from
+   * @param initialCapacity the initial capacity of the buffer
+   * @throws IllegalArgumentException if the initial capacity is less than or equal to zero
+   */
   public DynamicCharBuffer(Reader reader, int initialCapacity) {
     if (initialCapacity <= 0) {
       throw new IllegalArgumentException("Capacity must be greater than 0");
     }
+    this.initialCapacity = initialCapacity;
     this.reader = reader;
     this.buffer = null;
     this.index = 0;
@@ -205,11 +342,21 @@ class DynamicCharBuffer {
     loadBufferIfRequired();
   }
 
+  /**
+   * Returns whether there are more characters available in the buffer.
+   *
+   * @return true if there are more characters available, false otherwise
+   */
   public boolean hasNext() {
     loadBufferIfRequired();
     return index < length || !eof;
   }
 
+  /**
+   * Returns the next character from the buffer without removing it.
+   *
+   * @return the next character, or '\0' if no more characters are available
+   */
   public char next() {
     if (!hasNext()) {
       return '\0';
@@ -217,6 +364,11 @@ class DynamicCharBuffer {
     return buffer[index++];
   }
 
+  /**
+   * Peeks at the next character in the buffer without advancing the index.
+   *
+   * @return the next character, or '\0' if no more characters are available
+   */
   public char peek() {
     if (!hasNext()) {
       return '\0';
@@ -224,30 +376,57 @@ class DynamicCharBuffer {
     return buffer[index];
   }
 
+  /**
+   * Returns the number of valid characters currently stored in the buffer.
+   *
+   * @return the number of valid characters
+   */
   public int size() {
     return length;
   }
 
-  public char prev() {
-    if (index < 0) {
-      return '\0';
-    }
-    return buffer[--index];
+  /**
+   * Returns the current capacity of the buffer.
+   *
+   * @return the current capacity
+   */
+  public int capacity() {
+    return buffer.length;
   }
 
+  /**
+   * Rolls back the index by one position, effectively undoing the last call to {@link #next()}.
+   */
+  public void rollback() {
+    if (index >= startIndex) {
+      --index;
+    }
+  }
+
+  /**
+   * Clears all characters up to the current index, resetting the start index.
+   */
   public void clearTillCurrent() {
     this.startIndex = index;
   }
 
+  /**
+   * Returns a string containing all characters between the start index and the current index.
+   *
+   * @return the extracted string
+   */
   public String getStringTillCurrent() {
     return new String(buffer, startIndex, index - startIndex);
   }
 
+  /**
+   * Loads more characters into the buffer if necessary.
+   */
   private void loadBufferIfRequired() {
     if (eof || index < length) {
       return;
     }
-    int newCapacity = length == 0 || startIndex > (length >> 1) ? DEFAULT_BUFFER_SIZE : length * 2;
+    int newCapacity = length == 0 || startIndex > (length >> 1) ? initialCapacity : length * 2;
     char[] newBuffer = new char[newCapacity];
     if (buffer == null) {
       buffer = newBuffer;
@@ -271,9 +450,19 @@ class DynamicCharBuffer {
     }
   }
 
+  /**
+   * Custom exception thrown when an error occurs during buffer operations.
+   */
   public static class DynamicBufferException extends RuntimeException {
-    public DynamicBufferException(String message, Exception e) {
-      super(message, e);
+
+    /**
+     * Constructs a new DynamicBufferException instance.
+     *
+     * @param message the error message
+     * @param cause   the underlying cause
+     */
+    public DynamicBufferException(String message, Throwable cause) {
+      super(message, cause);
     }
   }
 }

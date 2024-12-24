@@ -1,50 +1,106 @@
-/*
-* Copyright (c) 2024 lex-engine
-* Author: Pradeesh Kumar
-*/
 package org.lexengine.lexer.gentest;
 
-import java.io.*;
 import java.io.FileReader;
+import java.util.Stack;
+import java.util.BitSet;
+import java.util.Map;
+import java.util.HashMap;
+import java.io.*;
 import java.nio.ByteBuffer;
 import java.util.Base64;
-import java.util.BitSet;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Stack;
 import java.util.zip.GZIPInputStream;
 
+/**
+ * A lexer implementation that tokenizes input from a given source path or reader.
+ */
 public class MyLexer {
 
+  /**
+   * Number of states used in the finite state machine.
+   */
   private static final int STATES_COUNT = 112;
+
+  /**
+   * Number of alphabets used in the finite state machine.
+   */
   private static final int ALPHABETS_COUNT = 50;
-  private static final int START_STATE = 80;
+
+  /**
+   * Starting state of the finite state machine.
+   */
+  private static final int START_STATE = 96;
+
+  /**
+   * Default buffer size for reading input.
+   */
   private static final int DEFAULT_BUFFER_SIZE = 1024;
 
   private final int[][] transitionTbl;
+
+  /**
+   * Set of final states in the finite state machine.
+   */
   private final BitSet finalStates;
+
+  /**
+   * Mapping of characters to their corresponding indices in the alphabet.
+   */
   private final Map<Integer, Integer> alphabetIndex;
+
+  /**
+   * Buffer for reading input.
+   */
   private final DynamicCharBuffer buffer;
+
+  /**
+   * Peeked token.
+   */
   private Token peek;
+
+  /**
+   * Value associated with the current token.
+   */
   private String value;
+
+  /**
+   * Current row number in the source.
+   */
   private int curRow;
+
+  /**
+   * Current column number in the source.
+   */
   private int curCol;
 
+  /**
+   * Constructs a new lexer instance from a file path.
+   *
+   * @param sourcePath path to the input file
+   * @throws FileNotFoundException if the file does not exist
+   */
   public MyLexer(String sourcePath) throws FileNotFoundException {
     this(new FileReader(sourcePath));
   }
 
+  /**
+   * Constructs a new lexer instance from a reader.
+   *
+   * @param reader input reader
+   */
   public MyLexer(Reader reader) {
     this.buffer = new DynamicCharBuffer(reader, DEFAULT_BUFFER_SIZE);
     this.alphabetIndex = loadAlphabetIndex();
     this.finalStates = BitSet.valueOf(new long[] {-1073741824L, 281474976710655L});
-    this.transitionTbl =
-        decompress(
-            "H4sIAAAAAAAA/+3V51MTURjF4VBEioB0UIpIEaSDWJAqRTqjAtJ7N+D//83DTBx3QiKb3Xtz37xzzsxvsrPsZPZhE4hEVK8e/fJx3Uv0IsH5uthrLapB1agKVaIKVI7K0HNUikpQMXqGilAhKkD56CnKQ09QLspB2SiLDjrooIMOOuiggw466KCDDjrooIMOOuiggw61Dr9rjJXsvO0kOl4JdjQHNElzmOq1EseBcEdrSJ8UR6LaBDraQ5qkOFJpW4kjvg4Fjk6f10l3eHurxPG3b0ocPwU5egzbXDlMderI0WfJk27HY/ULdwwEvD9pjmQNZrhj3dD9u3bE906JI0jDDhzvLZvS5TDZB0GO74Zt6XL0GrjXIc/xJ0eO+0YMWFw/j1T6nMGO0YBmV47dkPcrxWGicYeOCUumTH4ek4IdUyFt6XbMh7xfKY5Um1bieKxzQY5ZAx4JjvvmfFzzJQMcfjsR6Lj5z8/eoK4UfC4dJuM4juPcbQ2tohW0jJbQImpAm+gH+o2u0AXaQ3foEt2iKDpEO+gInUUe/p1v8hy3eI6/Jri2O/b60XNuDM0kuHYL7aONkL8DLf8HtTi0jM+DszF+rmRN6/O4tvjeNqf1eXDBt2DgPfi54rjk0/L90OKI37HF97Y5rc+D47h/4/dc1qKxOE7l/gDS+pw8gFcAAA==");
+    this.transitionTbl = decompress("H4sIAAAAAAAA/+3aaU8TYRiF4bLIKrIKIouAgICCqCA7CMoioCCr7EEQUAH//zdP05JMyhSmnXfmfebxnOROJ2UCczEN7QdiMdVrRGcezmtAT12er08+PkF1qBY9RjWoGlWhSlSBytEjVIYeolJUgopRESpEBegBykd5KBfl0EEHHXTQQQcddNBBBx100EEHHXTQQQcddNCh1uF1vcnSPR90dOh0cBzHRWVa/u52JeNkTMvrig46pDteC3b0Z2mS5jDVGyWOV8Id73z6pDjcGhDoGPRpkuLIpGdKHKkNKXAMezxPusPZiBLHTT+VOH4JcowbttlymOqFJcdkQJ6wHfc1JdzxIcvrk+ZI13TEHceGrt+2I7WPShzZ9MmCYzZgU1gOk80JcvQYtoXlmDBwrTOO4wVLjnifDVhs349MWoywYylLsy1Hs8/rleIw0ReLjq8BmaJ8P1YEO1Z92sJ2nPu8XimOTFtT4rivl4IcGwY8EhzxNj2c8y0CDq+dCnS03PG192g0Ax/HcRzHcYkdoUN0gPbRHtpFTWgb7aAT1I4u0HfUiVpRdyzx/7vP0V90iX7Hbr/v9jmO3zqOt1zOHUs+zjueW0brLudeoz/oyufvIKzPV/xc8n9Ny+tKi0PLeD9kTev9aAvwe2vfD9sXwHEe12HrB/8DJUn5a4BXAAA=");
     this.curRow = -1;
     this.curCol = -1;
   }
 
+  /**
+   * Checks if there are more tokens available.
+   *
+   * @return true if there are more tokens, false otherwise
+   */
   public boolean hasNext() {
     if (peek == null) {
       peek = next();
@@ -52,180 +108,92 @@ public class MyLexer {
     return peek != null;
   }
 
+  /**
+   * Returns the next token without consuming it.
+   *
+   * @return the next token, or null if none available
+   */
   public Token peek() {
     return this.peek;
   }
 
+  /**
+   * Returns the next token and consumes it.
+   *
+   * @return the next token, or null if none available
+   */
   public Token next() {
     if (peek != null) {
       Token t = peek;
       peek = null;
       return t;
     }
-    int state = 0;
     do {
-      state = advance();
+      int state = advance();
       switch (state) {
-        case 30,
-            31,
-            32,
-            33,
-            34,
-            35,
-            36,
-            37,
-            38,
-            39,
-            40,
-            41,
-            42,
-            43,
-            44,
-            45,
-            46,
-            47,
-            48,
-            49,
-            50,
-            51,
-            52,
-            53,
-            54,
-            55,
-            56,
-            57,
-            58,
-            59,
-            60,
-            61,
-            62,
-            63,
-            64,
-            65,
-            66,
-            67,
-            68,
-            69,
-            70,
-            71 -> {
-          return Token.identifier(value());
-        }
-        case 74, 75, 76, 77, 78, 79, 80 -> {
-          /* do nothing */
-        }
-        case 73 -> {
-          return Token.of(Token.Type.DOUBLE_OR);
-        }
-        case 72 -> {
-          return Token.of(Token.Type.STATIC);
-        }
-        case 83 -> {
-          return Token.of(Token.Type.OPEN_PAREN);
-        }
-        case 82 -> {
-          return Token.of(Token.Type.PRIVATE);
-        }
-        case 81 -> {
-          return Token.of(Token.Type.IMPORT);
-        }
-        case 84 -> {
-          return Token.of(Token.Type.PACKAGE);
-        }
-        case 85 -> {
-          return Token.of(Token.Type.CLOSE_BRACE);
-        }
-        case 86 -> {
-          return Token.of(Token.Type.PERCENTAGE);
-        }
-        case 87 -> {
-          return Token.of(Token.Type.INT);
-        }
-        case 88 -> {
-          return Token.of(Token.Type.OPEN_BRACE);
-        }
-        case 90 -> {
-          return Token.of(Token.Type.LESS);
-        }
-        case 89 -> {
-          return Token.of(Token.Type.FINAL);
-        }
-        case 91 -> {
-          return Token.of(Token.Type.PUBLIC);
-        }
-        case 92 -> {
-          return Token.of(Token.Type.SUB);
-        }
-        case 93 -> {
-          return Token.of(Token.Type.OR);
-        }
-        case 94 -> {
-          return Token.of(Token.Type.CLASS);
-        }
-        case 95 -> {
-          return Token.of(Token.Type.SEMICOLON);
-        }
-        case 96 -> {
-          return Token.of(Token.Type.EQ);
-        }
-        case 98 -> {
-          return Token.of(Token.Type.THIS);
-        }
-        case 97 -> {
-          return Token.of(Token.Type.GREATEREQ);
-        }
-        case 100 -> {
-          return Token.of(Token.Type.GREATER);
-        }
-        case 99 -> {
-          return Token.of(Token.Type.NEW);
-        }
-        case 101 -> {
-          return Token.of(Token.Type.THROW);
-        }
-        case 102 -> {
-          return Token.of(Token.Type.ADD);
-        }
-        case 104 -> {
-          return Token.of(Token.Type.MUL);
-        }
-        case 103 -> {
-          return Token.of(Token.Type.DIV);
-        }
-        case 105 -> {
-          return Token.of(Token.Type.LESSEQ);
-        }
-        case 106 -> {
-          return Token.of(Token.Type.IF);
-        }
-        case 110 -> {
-          return Token.of(Token.Type.DOT);
-        }
-        case 108, 109 -> {
-          return Token.integer(value());
-        }
-        case 107 -> {
-          return Token.string(value());
-        }
-        case 111 -> {
-          return Token.of(Token.Type.CLOSE_PAREN);
-        }
-        case -1 -> {
-          return null;
-        }
+        case 30 -> { return Token.of(Token.Type.PUBLIC); }
+        case 33 -> { return Token.of(Token.Type.DIV); }
+        case 32 -> { return Token.of(Token.Type.IF); }
+        case 31 -> { return Token.of(Token.Type.FINAL); }
+        case 35 -> { return Token.of(Token.Type.SEMICOLON); }
+        case 34 -> { return Token.of(Token.Type.GREATEREQ); }
+        case 36 -> { return Token.of(Token.Type.MUL); }
+        case 38 -> { return Token.of(Token.Type.DOT); }
+        case 37 -> { return Token.of(Token.Type.LESSEQ); }
+        case 39 -> { return Token.of(Token.Type.NEW); }
+        case 40, 41 -> { return Token.integer(value()); }
+        case 42 -> { return Token.of(Token.Type.PRIVATE); }
+        case 43 -> { return Token.of(Token.Type.THROW); }
+        case 44 -> { return Token.of(Token.Type.CLASS); }
+        case 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86 -> { return Token.identifier(value()); }
+        case 87 -> { return Token.of(Token.Type.PERCENTAGE); }
+        case 88 -> { return Token.of(Token.Type.SUB); }
+        case 89 -> { return Token.of(Token.Type.OPEN_PAREN); }
+        case 90, 91, 92, 93, 94, 95, 96 -> { /* do nothing */ }
+        case 97 -> { return Token.of(Token.Type.PACKAGE); }
+        case 98 -> { return Token.of(Token.Type.DOUBLE_OR); }
+        case 99 -> { return Token.of(Token.Type.CLOSE_PAREN); }
+        case 100 -> { return Token.of(Token.Type.THIS); }
+        case 101 -> { return Token.of(Token.Type.IMPORT); }
+        case 103 -> { return Token.of(Token.Type.STATIC); }
+        case 102 -> { return Token.string(value()); }
+        case 104 -> { return Token.of(Token.Type.ADD); }
+        case 105 -> { return Token.of(Token.Type.INT); }
+        case 106 -> { return Token.of(Token.Type.GREATER); }
+        case 108 -> { return Token.of(Token.Type.EQ); }
+        case 107 -> { return Token.of(Token.Type.OR); }
+        case 110 -> { return Token.of(Token.Type.OPEN_BRACE); }
+        case 109 -> { return Token.of(Token.Type.CLOSE_BRACE); }
+        case 111 -> { return Token.of(Token.Type.LESS); }
+        case -1 -> { return null; }
         default -> throw new LexerException("Unrecognized state " + state);
       }
-    } while (state != -1);
-    return null;
+    } while (true);
   }
 
+  /**
+   * Returns the value associated with the current token.
+   *
+   * @return the token value
+   */
   public String value() {
     return this.value;
   }
 
+  /**
+   * Returns the current row number.
+   *
+   * @return the current row number
+   */
   public int currentRow() {
     return this.curRow;
   }
 
+  /**
+   * Returns the current column number.
+   *
+   * @return the current column number
+   */
   public int currentCol() {
     return this.curCol;
   }
@@ -247,10 +215,10 @@ public class MyLexer {
       }
       Integer index = alphabetIndex.get((int) curCh);
       if (index == null) {
-        throw new LexerException(
-            String.format("Invalid character '%c' found in the source", curCh));
+        throw new LexerException(String.format("Invalid character '%c' found in the source", curCh));
       }
       int nextSt = transitionTbl[curSt][index];
+      if (finalStates.get(nextSt)) stStack.clear();
       stStack.push(nextSt);
       if (nextSt == 0) {
         return lookupFinalState(stStack, foundFinalState);
@@ -265,12 +233,11 @@ public class MyLexer {
 
   private int lookupFinalState(Stack<Integer> stStack, boolean foundFinalState) {
     if (!foundFinalState) {
-      throw new LexerException(
-          String.format("Cannot resolve symbol '%s'", buffer.getStringTillCurrent()));
+      throw new LexerException(String.format("Cannot resolve symbol '%s'", buffer.getStringTillCurrent()));
     }
     while (!finalStates.get(stStack.peek())) {
       stStack.pop();
-      buffer.prev();
+      buffer.rollback();
     }
     this.value = buffer.getStringTillCurrent();
     buffer.clearTillCurrent();
@@ -290,7 +257,7 @@ public class MyLexer {
   private static byte[] decompress(byte[] data) throws IOException {
     ByteArrayInputStream byteStream = new ByteArrayInputStream(data);
     try (GZIPInputStream gzipIS = new GZIPInputStream(byteStream);
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+         ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
       byte[] buffer = new byte[1024];
       int len;
       while ((len = gzipIS.read(buffer)) != -1) {
@@ -402,6 +369,10 @@ public class MyLexer {
     return Map.copyOf(map);
   }
 
+
+  /**
+   * Exception thrown when an error occurs during lexing.
+   */
   public static class LexerException extends RuntimeException {
     public LexerException(String message) {
       super(message);
@@ -413,25 +384,73 @@ public class MyLexer {
   }
 }
 
+/**
+ * A dynamic character buffer that reads characters from an underlying {@link Reader} and stores them in a
+ * dynamically-sized array. This allows for efficient reading and manipulation of large amounts of text data.
+ */
 class DynamicCharBuffer {
 
+  /**
+   * Default initial capacity of the buffer.
+   */
   private static final int DEFAULT_BUFFER_SIZE = 256;
 
+  /**
+   * Underlying reader providing the source of characters.
+   */
   private final Reader reader;
+
+  /**
+   * Current buffer holding the characters.
+   */
   private char[] buffer;
+
+  /**
+   * Number of valid characters currently stored in the buffer.
+   */
   private int length;
+
+  /**
+   * Index into the buffer where the next character will be returned from.
+   */
   private int index;
+
+  /**
+   * Starting index within the buffer where the current "window" begins.
+   */
   private int startIndex;
+
+  /**
+   * Flag indicating whether the end-of-file has been reached on the underlying reader.
+   */
   private boolean eof;
 
+  /**
+   * Initial capacity specified when creating the buffer.
+   */
+  private final int initialCapacity;
+
+  /**
+   * Constructs a new DynamicCharBuffer instance with the default initial capacity.
+   *
+   * @param reader the underlying reader to read characters from
+   */
   public DynamicCharBuffer(Reader reader) {
     this(reader, DEFAULT_BUFFER_SIZE);
   }
 
+  /**
+   * Constructs a new DynamicCharBuffer instance with the specified initial capacity.
+   *
+   * @param reader         the underlying reader to read characters from
+   * @param initialCapacity the initial capacity of the buffer
+   * @throws IllegalArgumentException if the initial capacity is less than or equal to zero
+   */
   public DynamicCharBuffer(Reader reader, int initialCapacity) {
     if (initialCapacity <= 0) {
       throw new IllegalArgumentException("Capacity must be greater than 0");
     }
+    this.initialCapacity = initialCapacity;
     this.reader = reader;
     this.buffer = null;
     this.index = 0;
@@ -441,11 +460,21 @@ class DynamicCharBuffer {
     loadBufferIfRequired();
   }
 
+  /**
+   * Returns whether there are more characters available in the buffer.
+   *
+   * @return true if there are more characters available, false otherwise
+   */
   public boolean hasNext() {
     loadBufferIfRequired();
     return index < length || !eof;
   }
 
+  /**
+   * Returns the next character from the buffer without removing it.
+   *
+   * @return the next character, or '\0' if no more characters are available
+   */
   public char next() {
     if (!hasNext()) {
       return '\0';
@@ -453,6 +482,11 @@ class DynamicCharBuffer {
     return buffer[index++];
   }
 
+  /**
+   * Peeks at the next character in the buffer without advancing the index.
+   *
+   * @return the next character, or '\0' if no more characters are available
+   */
   public char peek() {
     if (!hasNext()) {
       return '\0';
@@ -460,30 +494,57 @@ class DynamicCharBuffer {
     return buffer[index];
   }
 
+  /**
+   * Returns the number of valid characters currently stored in the buffer.
+   *
+   * @return the number of valid characters
+   */
   public int size() {
     return length;
   }
 
-  public char prev() {
-    if (index < 0) {
-      return '\0';
-    }
-    return buffer[--index];
+  /**
+   * Returns the current capacity of the buffer.
+   *
+   * @return the current capacity
+   */
+  public int capacity() {
+    return buffer.length;
   }
 
+  /**
+   * Rolls back the index by one position, effectively undoing the last call to {@link #next()}.
+   */
+  public void rollback() {
+    if (index >= startIndex) {
+      --index;
+    }
+  }
+
+  /**
+   * Clears all characters up to the current index, resetting the start index.
+   */
   public void clearTillCurrent() {
     this.startIndex = index;
   }
 
+  /**
+   * Returns a string containing all characters between the start index and the current index.
+   *
+   * @return the extracted string
+   */
   public String getStringTillCurrent() {
     return new String(buffer, startIndex, index - startIndex);
   }
 
+  /**
+   * Loads more characters into the buffer if necessary.
+   */
   private void loadBufferIfRequired() {
     if (eof || index < length) {
       return;
     }
-    int newCapacity = length == 0 || startIndex > (length >> 1) ? DEFAULT_BUFFER_SIZE : length * 2;
+    int newCapacity = length == 0 || startIndex > (length >> 1) ? initialCapacity : length * 2;
     char[] newBuffer = new char[newCapacity];
     if (buffer == null) {
       buffer = newBuffer;
@@ -497,6 +558,7 @@ class DynamicCharBuffer {
       int readSize = reader.read(newBuffer, length, buffer.length - length);
       if (readSize == -1) {
         eof = true;
+        reader.close();
         return;
       }
       buffer = newBuffer;
@@ -506,9 +568,19 @@ class DynamicCharBuffer {
     }
   }
 
+  /**
+   * Custom exception thrown when an error occurs during buffer operations.
+   */
   public static class DynamicBufferException extends RuntimeException {
-    public DynamicBufferException(String message, Exception e) {
-      super(message, e);
+
+    /**
+     * Constructs a new DynamicBufferException instance.
+     *
+     * @param message the error message
+     * @param cause   the underlying cause
+     */
+    public DynamicBufferException(String message, Throwable cause) {
+      super(message, cause);
     }
   }
 }

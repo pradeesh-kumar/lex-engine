@@ -59,7 +59,7 @@ public class Out {
   }
 
   public static void printBanner() {
-    out.write("Pradeesh Compiler Lexer Generator version: " + VERSION);
+    out.write("Pradeesh - Compiler Lexer Generator version: " + VERSION);
   }
 
   enum Level {
