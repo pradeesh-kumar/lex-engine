@@ -87,7 +87,9 @@ public final class NfaGenerator {
      * @return the generated NFA state
      */
     Nfa.NfaState generate() {
-      Out.debug("Generating NFA state for regex \"%s\" and action %s", regexAction.regex(), regexAction.action());
+      Out.debug(
+          "Generating NFA state for regex \"%s\" and action %s",
+          regexAction.regex(), regexAction.action());
       Nfa.NfaState state = generateInternal();
       state.registerAction(regexAction.action());
       return state;

@@ -80,7 +80,7 @@ public final class LexGenUtils {
   public static byte[] decompress(byte[] data) throws IOException {
     ByteArrayInputStream byteStream = new ByteArrayInputStream(data);
     try (GZIPInputStream gzipIS = new GZIPInputStream(byteStream);
-         ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
       byte[] buffer = new byte[1024];
       int len;
       while ((len = gzipIS.read(buffer)) != -1) {

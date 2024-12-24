@@ -4,10 +4,6 @@
 */
 package org.lexengine.lexer.core;
 
-import org.lexengine.lexer.error.ErrorType;
-import org.lexengine.lexer.error.GeneratorException;
-import org.lexengine.lexer.logging.Out;
-
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -17,6 +13,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.lexengine.lexer.error.ErrorType;
+import org.lexengine.lexer.error.GeneratorException;
+import org.lexengine.lexer.logging.Out;
 
 public interface LexClassGenerator {
   void generate();
@@ -106,10 +105,18 @@ class TableBasedLexClassGenerator implements LexClassGenerator {
     Set<Map.Entry<Action, List<Map.Entry<Integer, Action>>>> reverse =
         actions.entrySet().stream().collect(Collectors.groupingBy(Map.Entry::getValue)).entrySet();
 
-    String cases = reverse.stream().map(e -> {
-      String caseValues = e.getValue().stream().map(Map.Entry::getKey).map(String::valueOf).collect(Collectors.joining(", "));
-      return String.format(caseFormat, caseValues, e.getKey().toString());
-    }).collect(Collectors.joining(NEW_LINE_STR));
+    String cases =
+        reverse.stream()
+            .map(
+                e -> {
+                  String caseValues =
+                      e.getValue().stream()
+                          .map(Map.Entry::getKey)
+                          .map(String::valueOf)
+                          .collect(Collectors.joining(", "));
+                  return String.format(caseFormat, caseValues, e.getKey().toString());
+                })
+            .collect(Collectors.joining(NEW_LINE_STR));
     return cases;
   }
 

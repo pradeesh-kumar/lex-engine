@@ -64,14 +64,16 @@ public class RegexToken {
     token.quantifier = quantifier;
     token.chVal = literal;
     token.interval = Interval.of(literal);
-    token.type = escaped ? Type.Literal :
-        switch (literal) {
-          case '(' -> Type.LParen;
-          case ')' -> Type.RParen;
-          case '.' -> Type.Dot;
-          case '|' -> Type.Bar;
-          default -> Type.Literal;
-        };
+    token.type =
+        escaped
+            ? Type.Literal
+            : switch (literal) {
+              case '(' -> Type.LParen;
+              case ')' -> Type.RParen;
+              case '.' -> Type.Dot;
+              case '|' -> Type.Bar;
+              default -> Type.Literal;
+            };
     if ((token.type == Type.Dot || token.type == Type.Bar || token.type == Type.LParen)
         && token.quantifier != '\0') {
       Out.error("Invalid regular expression: " + literal);

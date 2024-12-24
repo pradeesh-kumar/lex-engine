@@ -127,12 +127,14 @@ public class SpecParser {
     Matcher regexMatcher = REGEX_PATTERN.matcher(line);
     if (!regexMatcher.find()) {
       Out.error("Invalid regex line: '%s' in the lexer spec file!", line);
+      throw GeneratorException.error(ErrorType.ERR_REGEX_ERR);
     }
     String regexStr = regexMatcher.group();
     Regex regex = Regex.fromString(regexStr.substring(1, regexStr.length() - 1));
     Matcher actionMatcher = ACTION_PATTERN.matcher(line.substring(regexStr.length()));
     if (!actionMatcher.find()) {
       Out.error("Invalid action line: '%s' in the lexer spec file!", line);
+      throw GeneratorException.error(ErrorType.ERR_REGEX_ERR);
     }
     Action action = new Action(actionMatcher.group());
     specBuilder.addRegexAction(new RegexAction(regex, action));
