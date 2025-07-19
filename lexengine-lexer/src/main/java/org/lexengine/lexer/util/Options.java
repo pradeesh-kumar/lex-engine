@@ -64,7 +64,7 @@ public class Options {
    *
    * @param args array of command-line arguments
    */
-  public static void loadFromArgs(String[] args) {
+  public static void overrideFromArgs(String[] args) {
     int i = 0;
     while (i < args.length) {
       if (args[i].equals("-v")) {

@@ -31,14 +31,13 @@ public class DfaMinimizerTest {
   @Test
   void testMatchesAndNonMatches_case2() {
     Options.verbose = true;
-    Dfa dfa = new DfaGenerator(TestUtils.generateNfa("lexer-spec.spec")).generate();
-    Dfa minDfa = new DfaMinimizer(dfa).minimize();
+    Dfa minDfa = new DfaMinimizer(new DfaGenerator(TestUtils.generateNfa("lexer-spec.spec")).generate()).minimize();
     assertAction(minDfa.test("new"), "{ return Token.keyword(Token.Type.NEW); }");
     assertAction(minDfa.test("int"), "{ return Token.keyword(Token.Type.INT); }");
     assertAction(minDfa.test("float"), "{ return Token.keyword(Token.Type.FLOAT); }");
     assertAction(minDfa.test("not"), "{ return Token.keyword(Token.Type.NOT); }");
     assertAction(minDfa.test("0"), "{ return Token.integer(value); }");
-    assertNull(dfa.test("00"));
+    assertNull(minDfa.test("00"));
     assertAction(minDfa.test("9"), "{ return Token.integer(value); }");
     assertAction(minDfa.test("123920310"), "{ return Token.integer(value); }");
     assertAction(minDfa.test("D"), "{ return Token.identifier(value); }");
@@ -55,6 +54,8 @@ public class DfaMinimizerTest {
     assertNull(minDfa.test("0abc"));
     assertNull(minDfa.test("$"));
     assertNull(minDfa.test("0121"));
+    assertAction(minDfa.test("/* hello world how are you */"), "{ return Token.comment(); }");
+    assertAction(minDfa.test("/** my comment ****/"), "{ return Token.comment(); }");
   }
 
   private void assertAction(Action action, String expected) {

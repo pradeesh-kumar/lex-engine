@@ -26,7 +26,7 @@ public class LexerGenerator {
   private final File lexerspecFile;
 
   /**
-   * A set of disjoint intervals representing the language alphabets.
+   * A set of disjoint ranges representing the language alphabets.
    */
   private final DisjointIntSet languageAlphabets;
 
@@ -62,11 +62,10 @@ public class LexerGenerator {
   public void generate() {
     mkdirIfNotExists();
     this.lexSpec = new SpecParser(lexerspecFile).parseSpec();
-    LexGenUtils.extractAlphabetsFromRegex(lexSpec.regexActionList(), languageAlphabets);
+    LexUtils.extractAlphabetsFromRegex(lexSpec.regexActionList(), languageAlphabets);
     Out.debug("Language alphabets: " + languageAlphabets);
-    Map<Interval, Integer> alphabetIndex = LexGenUtils.createAlphabetsIndex(this.languageAlphabets.intervals());
-    Nfa nfa =
-        new NfaGenerator(lexSpec.regexActionList(), languageAlphabets, alphabetIndex).generate();
+    Map<Range, Integer> alphabetIndex = LexUtils.createAlphabetsIndex(this.languageAlphabets.ranges());
+    Nfa nfa = new NfaGenerator(lexSpec.regexActionList(), languageAlphabets, alphabetIndex).generate();
     Dfa dfa = new DfaGenerator(nfa).generate();
     dfa = new DfaMinimizer(dfa).minimize();
     LexClassGenerator lexClassGenerator =

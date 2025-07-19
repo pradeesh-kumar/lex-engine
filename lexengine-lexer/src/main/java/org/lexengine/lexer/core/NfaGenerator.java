@@ -20,7 +20,7 @@ public final class NfaGenerator {
 
   private final List<RegexAction> regexActions;
   private final DisjointIntSet languageAlphabets;
-  private final Map<Interval, Integer> alphabetIndex;
+  private final Map<Range, Integer> alphabetIndex;
 
   /**
    * Constructs an NfaGenerator instance with the given list of regular expressions and actions,
@@ -28,12 +28,12 @@ public final class NfaGenerator {
    *
    * @param regexActions the list of regular expressions and actions
    * @param languageAlphabets the set of language alphabets
-   * @param alphabetIndex the mapping of intervals to indices
+   * @param alphabetIndex the mapping of ranges to indices
    */
   NfaGenerator(
       List<RegexAction> regexActions,
       DisjointIntSet languageAlphabets,
-      Map<Interval, Integer> alphabetIndex) {
+      Map<Range, Integer> alphabetIndex) {
 
     Objects.requireNonNull(regexActions);
     Objects.requireNonNull(languageAlphabets);
@@ -149,7 +149,7 @@ public final class NfaGenerator {
      * @return the updated NFA state
      */
     private Nfa.NfaState applyLiteral(Nfa.NfaState current, RegexToken token) {
-      Nfa.NfaState state = nfa.new NfaState(alphabetIndex.get(token.interval()));
+      Nfa.NfaState state = nfa.new NfaState(alphabetIndex.get(token.range()));
       applyQuantifierIfPresent(state, token);
       if (current == null) {
         return state;
@@ -166,8 +166,8 @@ public final class NfaGenerator {
      * @return the updated NFA state
      */
     private Nfa.NfaState applyDot(Nfa.NfaState current, RegexToken token) {
-      List<Interval> allIntervals = languageAlphabets.intervals();
-      return applyCharClass(current, token, allIntervals);
+      List<Range> allRanges = languageAlphabets.ranges();
+      return applyCharClass(current, token, allRanges);
     }
 
     /**
@@ -178,7 +178,7 @@ public final class NfaGenerator {
      * @return the updated NFA state
      */
     private Nfa.NfaState applyCharClass(Nfa.NfaState current, RegexToken token) {
-      List<Interval> intersection = languageAlphabets.getIntersection(token.intervals());
+      List<Range> intersection = languageAlphabets.getIntersection(token.ranges());
       return applyCharClass(current, token, intersection);
     }
 
@@ -190,25 +190,25 @@ public final class NfaGenerator {
      * @return the updated NFA state
      */
     private Nfa.NfaState applyInvertedCharClass(Nfa.NfaState current, RegexToken token) {
-      List<Interval> difference = languageAlphabets.getDifference(token.intervals());
+      List<Range> difference = languageAlphabets.getDifference(token.ranges());
       return applyCharClass(current, token, difference);
     }
 
     /**
-     * Applies a character class token to the current NFA state using the specified intervals.
+     * Applies a character class token to the current NFA state using the specified ranges.
      *
      * @param current the current NFA state
      * @param token the character class token
-     * @param intervals the intervals to use
+     * @param ranges the ranges to use
      * @return the updated NFA state
      */
     private Nfa.NfaState applyCharClass(
-        Nfa.NfaState current, RegexToken token, List<Interval> intervals) {
-      Iterator<Interval> intervalItr = intervals.iterator();
-      Interval first = intervalItr.next();
+        Nfa.NfaState current, RegexToken token, List<Range> ranges) {
+      Iterator<Range> rangeItr = ranges.iterator();
+      Range first = rangeItr.next();
       var firstState = nfa.new NfaState(alphabetIndex.get(first));
-      while (intervalItr.hasNext()) {
-        firstState.alternate(nfa.new NfaState(alphabetIndex.get(intervalItr.next())));
+      while (rangeItr.hasNext()) {
+        firstState.alternate(nfa.new NfaState(alphabetIndex.get(rangeItr.next())));
       }
       applyQuantifierIfPresent(firstState, token);
       if (current == null) {

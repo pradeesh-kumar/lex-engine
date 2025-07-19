@@ -14,8 +14,7 @@ public class DfaGeneratorTest {
 
   @Test
   void testMatchesAndNonMatches() {
-    Nfa nfa = TestUtils.generateNfa("lexer-spec.spec");
-    Dfa dfa = new DfaGenerator(nfa).generate();
+    Dfa dfa = new DfaGenerator(TestUtils.generateNfa("lexer-spec.spec")).generate();
     assertNotNull(dfa);
     assertAction(dfa.test("new"), "{ return Token.keyword(Token.Type.NEW); }");
     assertAction(dfa.test("int"), "{ return Token.keyword(Token.Type.INT); }");
@@ -39,6 +38,8 @@ public class DfaGeneratorTest {
     assertNull(dfa.test("0121"));
     assertNull(dfa.test("0abc"));
     assertNull(dfa.test("$"));
+    assertAction(dfa.test("/* hello world how are you */"), "{ return Token.comment(); }");
+    assertAction(dfa.test("/** my comment ****/"), "{ return Token.comment(); }");
   }
 
   private void assertAction(Action action, String expected) {

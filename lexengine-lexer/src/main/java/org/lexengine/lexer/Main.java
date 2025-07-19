@@ -14,7 +14,7 @@ public class Main {
   public static void main(String[] args) {
     Out.printBanner();
     Options.loadDefaults();
-    Options.loadFromArgs(args);
+    Options.overrideFromArgs(args);
     try {
       LexerGenerator lexerGenerator = new LexerGenerator(Options.lexerSpecFile);
       lexerGenerator.generate();

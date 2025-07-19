@@ -19,49 +19,49 @@ public class DisjointIntSetTest {
     set.addRange(97, 99);
     set.addRange(97, 100);
     set.addRange(98, 108);
-    List<Interval> disjointed = set.intervals();
+    List<Range> disjointed = set.ranges();
     assertEquals(4, disjointed.size());
     assertEquals(
         disjointed,
         List.of(
-            Interval.of(97, 97),
-            Interval.of(98, 99),
-            Interval.of(100, 100),
-            Interval.of(101, 108)));
+            Range.of(97, 97),
+            Range.of(98, 99),
+            Range.of(100, 100),
+            Range.of(101, 108)));
 
-    assertIntersection(set, 97, 97, List.of(Interval.of(97, 97)));
-    assertIntersection(set, 100, 100, List.of(Interval.of(100, 100)));
+    assertIntersection(set, 97, 97, List.of(Range.of(97, 97)));
+    assertIntersection(set, 100, 100, List.of(Range.of(100, 100)));
     assertIntersection(set, 108, 108, List.of());
-    assertIntersection(set, 100, 108, List.of(Interval.of(100, 100), Interval.of(101, 108)));
-    assertIntersection(set, 97, 108, set.intervals());
+    assertIntersection(set, 100, 108, List.of(Range.of(100, 100), Range.of(101, 108)));
+    assertIntersection(set, 97, 108, set.ranges());
     assertIntersection(
-        set, 98, 108, List.of(Interval.of(98, 99), Interval.of(100, 100), Interval.of(101, 108)));
+        set, 98, 108, List.of(Range.of(98, 99), Range.of(100, 100), Range.of(101, 108)));
 
     set.add(105);
-    disjointed = set.intervals();
+    disjointed = set.ranges();
     assertEquals(6, disjointed.size());
     assertEquals(
         disjointed,
         List.of(
-            Interval.of(97, 97),
-            Interval.of(98, 99),
-            Interval.of(100, 100),
-            Interval.of(101, 104),
-            Interval.of(105, 105),
-            Interval.of(106, 108)));
+            Range.of(97, 97),
+            Range.of(98, 99),
+            Range.of(100, 100),
+            Range.of(101, 104),
+            Range.of(105, 105),
+            Range.of(106, 108)));
   }
 
   @Test
   public void testGetDifference_CompleteOverlap_ReturnsEmptyList() {
     // Arrange
     DisjointIntSet setA = new DisjointIntSet();
-    setA.add(Interval.of(1, 3));
-    setA.add(Interval.of(5, 7));
+    setA.add(Range.of(1, 3));
+    setA.add(Range.of(5, 7));
 
-    Collection<Interval> setB = Arrays.asList(Interval.of(1, 3), Interval.of(5, 7));
+    Collection<Range> setB = Arrays.asList(Range.of(1, 3), Range.of(5, 7));
 
     // Act
-    List<Interval> result = setA.getDifference(setB);
+    List<Range> result = setA.getDifference(setB);
 
     // Assert
     assertTrue(result.isEmpty());
@@ -71,11 +71,11 @@ public class DisjointIntSetTest {
   public void testGetDifference_IllegalCharacters_ThrowsIllegalArgumentException() {
     // Arrange
     DisjointIntSet setA = new DisjointIntSet();
-    setA.add(Interval.of(1, 3));
-    setA.add(Interval.of(5, 7));
+    setA.add(Range.of(1, 3));
+    setA.add(Range.of(5, 7));
 
-    Collection<Interval> setB =
-        Arrays.asList(Interval.of(10, 12), Interval.of(15, 18)); // 18 is outside setA
+    Collection<Range> setB =
+        Arrays.asList(Range.of(10, 12), Range.of(15, 18)); // 18 is outside setA
 
     // Act & Assert
     assertThrows(IllegalArgumentException.class, () -> setA.getDifference(setB));
@@ -90,8 +90,8 @@ public class DisjointIntSetTest {
     assertThrows(NullPointerException.class, () -> setA.getDifference(null));
   }
 
-  private void assertIntersection(DisjointIntSet set, int start, int end, List<Interval> expected) {
-    List<Interval> intersections =
+  private void assertIntersection(DisjointIntSet set, int start, int end, List<Range> expected) {
+    List<Range> intersections =
         start == end ? set.getIntersection(start) : set.getIntersection(start, end);
     assertEquals(expected, intersections);
   }
@@ -109,8 +109,8 @@ public class DisjointIntSetTest {
 
   @Test
   public void testFrom() {
-    Collection<Interval> intervals = Arrays.asList(Interval.of(1, 5), Interval.of(7, 10));
-    DisjointIntSet set = DisjointIntSet.from(intervals);
+    Collection<Range> ranges = Arrays.asList(Range.of(1, 5), Range.of(7, 10));
+    DisjointIntSet set = DisjointIntSet.from(ranges);
     assertEquals(2, set.size());
     assertFalse(set.isEmpty());
   }
@@ -120,7 +120,7 @@ public class DisjointIntSetTest {
     DisjointIntSet set = new DisjointIntSet();
     set.addRange(1, 5);
     assertIntersection(set, 3, 3, List.of());
-    assertIntersection(set, 1, 5, List.of(Interval.of(1, 5)));
+    assertIntersection(set, 1, 5, List.of(Range.of(1, 5)));
   }
 
   @Test
@@ -157,13 +157,13 @@ public class DisjointIntSetTest {
   }
 
   @Test
-  public void testGetInterval_Found() {
+  public void testGetRange_Found() {
     // Arrange
     DisjointIntSet disjointIntSet = new DisjointIntSet();
-    disjointIntSet.add(Interval.of(10, 20));
+    disjointIntSet.add(Range.of(10, 20));
 
     // Act
-    Interval result = disjointIntSet.getInterval(15);
+    Range result = disjointIntSet.getRange(15);
 
     // Assert
     assertNotNull(result);
@@ -172,27 +172,27 @@ public class DisjointIntSetTest {
   }
 
   @Test
-  public void testGetInterval_NotFound() {
+  public void testGetRange_NotFound() {
     // Arrange
     DisjointIntSet disjointIntSet = new DisjointIntSet();
 
     // Act
-    Interval result = disjointIntSet.getInterval(15);
+    Range result = disjointIntSet.getRange(15);
 
     // Assert
     assertNull(result);
   }
 
   @Test
-  public void testGetInterval_MultipleIntervals() {
+  public void testGetRange_Multipleranges() {
     // Arrange
     DisjointIntSet disjointIntSet = new DisjointIntSet();
-    disjointIntSet.add(Interval.of(10, 20));
-    disjointIntSet.add(Interval.of(30, 40));
+    disjointIntSet.add(Range.of(10, 20));
+    disjointIntSet.add(Range.of(30, 40));
 
     // Act
-    Interval result1 = disjointIntSet.getInterval(15);
-    Interval result2 = disjointIntSet.getInterval(35);
+    Range result1 = disjointIntSet.getRange(15);
+    Range result2 = disjointIntSet.getRange(35);
 
     // Assert
     assertNotNull(result1);
@@ -205,13 +205,13 @@ public class DisjointIntSetTest {
   }
 
   @Test
-  public void testGetInterval_ExactMatch() {
+  public void testGetRange_ExactMatch() {
     // Arrange
     DisjointIntSet disjointIntSet = new DisjointIntSet();
-    disjointIntSet.add(Interval.of(10, 10)); // Single-element interval
+    disjointIntSet.add(Range.of(10, 10)); // Single-element range
 
     // Act
-    Interval result = disjointIntSet.getInterval(10);
+    Range result = disjointIntSet.getRange(10);
 
     // Assert
     assertNotNull(result);
@@ -220,12 +220,12 @@ public class DisjointIntSetTest {
   }
 
   @Test
-  public void testGetInterval_NoIntervals() {
+  public void testGetRange_Noranges() {
     // Arrange
     DisjointIntSet disjointIntSet = new DisjointIntSet();
 
     // Act
-    Interval result = disjointIntSet.getInterval(15);
+    Range result = disjointIntSet.getRange(15);
 
     // Assert
     assertNull(result);

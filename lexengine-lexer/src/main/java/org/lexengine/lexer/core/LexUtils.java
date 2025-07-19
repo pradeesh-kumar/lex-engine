@@ -17,7 +17,7 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 /** Utility class providing helper methods for lexical analysis tasks. */
-public final class LexGenUtils {
+public final class LexUtils {
 
   /**
    * Extracts alphabets from a list of regular expressions and adds them to a disjoint set of
@@ -36,16 +36,16 @@ public final class LexGenUtils {
   }
 
   /**
-   * Creates an index mapping intervals to unique integers.
+   * Creates an index mapping ranges to unique integers.
    *
-   * @param intervals a list of intervals
-   * @return a map where each interval is associated with a unique integer index
+   * @param ranges a list of ranges
+   * @return a map where each range is associated with a unique integer index
    */
-  static Map<Interval, Integer> createAlphabetsIndex(List<Interval> intervals) {
-    Map<Interval, Integer> alphabetIndex = new HashMap<>(intervals.size());
+  static Map<Range, Integer> createAlphabetsIndex(List<Range> ranges) {
+    Map<Range, Integer> alphabetIndex = new HashMap<>(ranges.size());
     int index = 0;
-    for (var interval : intervals) {
-      alphabetIndex.put(interval, index++);
+    for (var range : ranges) {
+      alphabetIndex.put(range, index++);
     }
     return alphabetIndex;
   }

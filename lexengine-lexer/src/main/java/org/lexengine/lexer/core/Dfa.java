@@ -35,17 +35,17 @@ public class Dfa {
   private final Map<Integer, Action> actionMap;
   private final BitSet finalStates;
   private final DisjointIntSet languageAlphabets;
-  private final Map<Interval, Integer> alphabetIndex;
+  private final Map<Range, Integer> alphabetIndex;
 
   /**
    * Constructs a new DFA with the specified parameters.
    *
    * @param statesCount number of states in the DFA
    * @param languageAlphabets set of language alphabets used by the DFA
-   * @param alphabetIndex mapping of intervals to alphabet indices
+   * @param alphabetIndex mapping of ranges to alphabet indices
    */
   public Dfa(
-      int statesCount, DisjointIntSet languageAlphabets, Map<Interval, Integer> alphabetIndex) {
+      int statesCount, DisjointIntSet languageAlphabets, Map<Range, Integer> alphabetIndex) {
     this.alphabetSize = languageAlphabets.size();
     this.statesCount = 1; // 0 is dedicated for phi state
     this.transitionTbl = new int[statesCount + 1][this.alphabetSize];
@@ -127,11 +127,11 @@ public class Dfa {
   }
 
   /**
-   * Returns the mapping of intervals to alphabet indices.
+   * Returns the mapping of Ranges to alphabet indices.
    *
-   * @return mapping of intervals to alphabet indices
+   * @return mapping of Ranges to alphabet indices
    */
-  public Map<Interval, Integer> alphabetIndex() {
+  public Map<Range, Integer> alphabetIndex() {
     return alphabetIndex;
   }
 
@@ -241,8 +241,8 @@ public class Dfa {
   public Action test(String input) {
     int currentState = this.startState;
     for (int i = 0; i < input.length(); i++) {
-      Interval interval = languageAlphabets.getInterval(input.charAt(i));
-      Integer alphaIndex = alphabetIndex.get(interval);
+      Range range = languageAlphabets.getRange(input.charAt(i));
+      Integer alphaIndex = alphabetIndex.get(range);
       if (alphaIndex == null) {
         return null;
       }

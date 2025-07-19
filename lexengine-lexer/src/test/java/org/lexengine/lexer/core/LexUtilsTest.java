@@ -9,7 +9,7 @@ import java.util.Base64;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public class LexGenUtilsTest {
+public class LexUtilsTest {
 
   private int[][] transitionTbl = {
     {
@@ -376,8 +376,8 @@ public class LexGenUtilsTest {
     int rows = transitionTbl.length;
     int cols = transitionTbl[0].length;
 
-    byte[] serialized = LexGenUtils.serialize2DArray(transitionTbl);
-    int[][] deserialized = LexGenUtils.deserialize2DArray(serialized, rows, cols);
+    byte[] serialized = LexUtils.serialize2DArray(transitionTbl);
+    int[][] deserialized = LexUtils.deserialize2DArray(serialized, rows, cols);
     Assertions.assertArrayEquals(transitionTbl, deserialized);
   }
 
@@ -386,11 +386,11 @@ public class LexGenUtilsTest {
     int rows = transitionTbl.length;
     int cols = transitionTbl[0].length;
 
-    byte[] serialized = LexGenUtils.serialize2DArray(transitionTbl);
-    byte[] compressed = LexGenUtils.compress(serialized);
+    byte[] serialized = LexUtils.serialize2DArray(transitionTbl);
+    byte[] compressed = LexUtils.compress(serialized);
 
-    byte[] decompressed = LexGenUtils.decompress(compressed);
-    int[][] decompressedTTl = LexGenUtils.deserialize2DArray(decompressed, rows, cols);
+    byte[] decompressed = LexUtils.decompress(compressed);
+    int[][] decompressedTTl = LexUtils.deserialize2DArray(decompressed, rows, cols);
     Assertions.assertArrayEquals(transitionTbl, decompressedTTl);
 
     byte[] encoded = Base64.getEncoder().encode(compressed);
@@ -401,14 +401,14 @@ public class LexGenUtilsTest {
     byte[] strDecoded = Base64.getDecoder().decode(encodedStr);
     Assertions.assertArrayEquals(compressed, strDecoded);
 
-    decompressedTTl = LexGenUtils.deserialize2DArray(decompressed, rows, cols);
+    decompressedTTl = LexUtils.deserialize2DArray(decompressed, rows, cols);
     Assertions.assertArrayEquals(transitionTbl, decompressedTTl);
   }
 
   @Test
   void testCompression2() throws IOException {
-    byte[] serializedData = LexGenUtils.serialize2DArray(transitionTbl);
-    byte[] compressedData = LexGenUtils.compress(serializedData);
+    byte[] serializedData = LexUtils.serialize2DArray(transitionTbl);
+    byte[] compressedData = LexUtils.compress(serializedData);
     String compressed = Base64.getEncoder().encodeToString(compressedData);
 
     System.out.println(compressed);

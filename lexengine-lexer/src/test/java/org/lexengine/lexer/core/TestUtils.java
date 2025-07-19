@@ -20,9 +20,9 @@ public class TestUtils {
   public static Nfa generateNfa(LexSpec lexSpec) {
     List<RegexAction> regexActionList = lexSpec.regexActionList();
     DisjointIntSet languageAlphabets = new DisjointIntSet();
-    LexGenUtils.extractAlphabetsFromRegex(regexActionList, languageAlphabets);
-    Map<Interval, Integer> alphabetsIndex =
-        LexGenUtils.createAlphabetsIndex(languageAlphabets.intervals());
+    LexUtils.extractAlphabetsFromRegex(regexActionList, languageAlphabets);
+    Map<Range, Integer> alphabetsIndex =
+        LexUtils.createAlphabetsIndex(languageAlphabets.ranges());
     NfaGenerator nfaGenerator =
         new NfaGenerator(regexActionList, languageAlphabets, alphabetsIndex);
     Nfa nfa = nfaGenerator.generate();

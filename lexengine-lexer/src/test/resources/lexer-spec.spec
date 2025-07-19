@@ -9,7 +9,6 @@ methodName=next
 returnType=Token
 
 ---
-
 # Keywords
 "int" { return Token.keyword(Token.Type.INT); }
 "float" { return Token.keyword(Token.Type.FLOAT); }
@@ -30,4 +29,8 @@ returnType=Token
 # Integer
 "[0-9]|[1-9][0-9]*" { return Token.integer(value); }
 
+# Comment
+"/\*.*\*/" { return Token.comment(); }
+
+# Ignore white spaces
 "[\ \t\b\f\r\n]+" { /* do nothing */ }

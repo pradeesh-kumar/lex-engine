@@ -13,7 +13,7 @@ import org.lexengine.lexer.logging.Out;
 public class RegexToken {
 
   /** Represents various token types. */
-  public enum Type {
+  enum Type {
     Literal,
     CharClass,
     InvertedCharClass,
@@ -34,8 +34,8 @@ public class RegexToken {
 
   private Type type;
   private char chVal;
-  private List<Interval> intervals;
-  private Interval interval;
+  private List<Range> ranges;
+  private Range range;
   // Currently range quantifier {min, max} is not supported
   private char quantifier;
 
@@ -63,7 +63,7 @@ public class RegexToken {
     RegexToken token = new RegexToken();
     token.quantifier = quantifier;
     token.chVal = literal;
-    token.interval = Interval.of(literal);
+    token.range = Range.of(literal);
     token.type =
         escaped
             ? Type.Literal
@@ -74,7 +74,7 @@ public class RegexToken {
               case '|' -> Type.Bar;
               default -> Type.Literal;
             };
-    if ((token.type == Type.Dot || token.type == Type.Bar || token.type == Type.LParen)
+    if ((token.type == Type.Bar || token.type == Type.LParen)
         && token.quantifier != '\0') {
       Out.error("Invalid regular expression: " + literal);
       throw GeneratorException.error(ErrorType.ERR_REGEX_ERR);
@@ -83,17 +83,17 @@ public class RegexToken {
   }
 
   /**
-   * Creates a new character class token from a list of intervals and an optional inversion flag.
+   * Creates a new character class token from a list of ranges and an optional inversion flag.
    *
-   * @param intervals the list of intervals defining the character class
+   * @param ranges the list of ranges defining the character class
    * @param inverted whether the character class should match characters outside the specified
    *     ranges
    * @param quantifier the quantifier to apply to the token, or '\0' for no quantifier
    * @return a new RegexToken instance
    */
-  public static RegexToken ofClass(List<Interval> intervals, boolean inverted, char quantifier) {
+  public static RegexToken ofClass(List<Range> ranges, boolean inverted, char quantifier) {
     RegexToken token = new RegexToken();
-    token.intervals = intervals;
+    token.ranges = ranges;
     token.quantifier = quantifier;
     token.type = inverted ? Type.InvertedCharClass : Type.CharClass;
     return token;
@@ -104,26 +104,26 @@ public class RegexToken {
    *
    * @return the type of this token
    */
-  public Type type() {
+  Type type() {
     return type;
   }
 
   /**
-   * Returns the list of intervals associated with this token, if it is a character class token.
+   * Returns the list of ranges associated with this token, if it is a character class token.
    *
-   * @return the list of intervals, or null if this token is not a character class token
+   * @return the list of ranges, or null if this token is not a character class token
    */
-  public List<Interval> intervals() {
-    return intervals;
+  public List<Range> ranges() {
+    return ranges;
   }
 
   /**
-   * Returns the interval associated with this token, if it is a literal token.
+   * Returns the range associated with this token, if it is a literal token.
    *
-   * @return the interval, or null if this token is not a literal token
+   * @return the range, or null if this token is not a literal token
    */
-  public Interval interval() {
-    return interval;
+  public Range range() {
+    return range;
   }
 
   /**

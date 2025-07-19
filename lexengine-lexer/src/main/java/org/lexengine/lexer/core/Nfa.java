@@ -22,7 +22,7 @@ public class Nfa {
   private BitSet[][] transitionTbl;
 
   private final DisjointIntSet languageAlphabets;
-  private final Map<Interval, Integer> alphabetIndex;
+  private final Map<Range, Integer> alphabetIndex;
   private final int alphabetSize;
   private final BitSet finalStates;
   private final Map<Integer, Action> actionMap;
@@ -30,7 +30,7 @@ public class Nfa {
   private int startState;
   private final int epsilonAlphabetIndex;
 
-  public Nfa(DisjointIntSet languageAlphabets, Map<Interval, Integer> alphabetIndex) {
+  public Nfa(DisjointIntSet languageAlphabets, Map<Range, Integer> alphabetIndex) {
     this.languageAlphabets = languageAlphabets;
     this.alphabetIndex = alphabetIndex;
     this.alphabetSize = languageAlphabets.size() + 1; // + 1 extra for epsilon
@@ -105,7 +105,7 @@ public class Nfa {
     return languageAlphabets;
   }
 
-  public Map<Interval, Integer> alphabetIndex() {
+  public Map<Range, Integer> alphabetIndex() {
     return alphabetIndex;
   }
 
@@ -137,8 +137,8 @@ public class Nfa {
     BitSet transitions = null;
     if (pos < input.length()) {
       char ch = input.charAt(pos);
-      Interval interval = languageAlphabets.getInterval(ch);
-      Integer alphaIndex = alphabetIndex.get(interval);
+      Range range = languageAlphabets.getRange(ch);
+      Integer alphaIndex = alphabetIndex.get(range);
       if (alphaIndex == null) {
         return null;
       }

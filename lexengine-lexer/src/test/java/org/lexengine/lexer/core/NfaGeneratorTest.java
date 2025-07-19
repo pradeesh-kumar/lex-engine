@@ -42,6 +42,8 @@ public class NfaGeneratorTest {
     assertNull(nfa.test("0abc"));
     assertNull(nfa.test("$"));
     assertAction(nfa.test("\n"), "{ /* do nothing */ }");
+    assertAction(nfa.test("/* hello world how are you */"), "{ return Token.comment(); }");
+    assertAction(nfa.test("/** my comment ****/"), "{ return Token.comment(); }");
   }
 
   private void assertAction(Action action, String expected) {

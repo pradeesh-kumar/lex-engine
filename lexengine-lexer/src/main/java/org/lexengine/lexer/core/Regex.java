@@ -18,11 +18,19 @@ import org.lexengine.lexer.logging.Out;
  */
 public class Regex implements Iterable<RegexToken> {
 
-  /** A set of meta-characters used in regular expressions. */
+  /** A set of meta-characters used in regular expressions.
+   * Meta Chars
+   * <ul>
+   *   <li>* matches zero or more occurrence of the preceding element</li>
+   *   <li>+ matches one or more occurrence of the preceding element</li>
+   *   <li>? matches zero or one occurrence of the preceding element</li>
+   *   <li>. matches any single char</li>
+   * </ul>
+   * */
   private static final Set<Character> META_CHARS =
       Set.of('|', '.', '^', '*', '+', '?', '(', ')', '{', '}', '[', ']');
 
-  /** Escape sequence mappings * */
+  /** Escape sequence mappings. */
   private static final Map<Character, Character> ESCAPE_CHAR_MAP =
       Map.of(
           '\\', '\\',
@@ -78,25 +86,32 @@ public class Regex implements Iterable<RegexToken> {
   }
 
   /**
-   * Extracts all alphabetic intervals from the regular expression.
+   * Extracts all alphabetic ranges from the regular expression.
    *
-   * @return a list of extracted intervals
+   * @return a list of extracted ranges
    */
-  public List<Interval> extractAlphabets() {
+  public List<Range> extractAlphabets() {
     Iterator<RegexToken> itr = iterator();
-    List<Interval> intervals = new LinkedList<>();
+    List<Range> ranges = new LinkedList<>();
+
+    boolean widerRangeAdded = false;
     while (itr.hasNext()) {
       RegexToken token = itr.next();
       if (token.type().isMetaChar()) {
+        if (token.type() == RegexToken.Type.Dot && !widerRangeAdded) {
+          // From space till ~ symbol. This includes symbols, both lower and upper case alphabets and digits.
+          ranges.add(Range.of(32, 126));
+          widerRangeAdded = true;
+        }
         continue;
       }
       if (token.chVal() != '\0') {
-        intervals.add(Interval.of(token.chVal()));
+        ranges.add(Range.of(token.chVal()));
       } else {
-        intervals.addAll(token.intervals());
+        ranges.addAll(token.ranges());
       }
     }
-    return intervals;
+    return ranges;
   }
 
   /**
@@ -134,10 +149,7 @@ public class Regex implements Iterable<RegexToken> {
 
     @Override
     public boolean hasNext() {
-      if (pos >= val.length()) {
-        return false;
-      }
-      return true;
+      return pos < val.length();
     }
 
     @Override
@@ -187,18 +199,18 @@ public class Regex implements Iterable<RegexToken> {
     private RegexToken convertCharClasses() {
       char literal = advance();
       boolean inverted = false;
-      if (literal == '\0' || literal == ']') {
-        Out.error("Invalid regex %s", val);
-        throw GeneratorException.error(ErrorType.ERR_REGEX_INVALID);
-      }
       if (literal == '^') {
         inverted = true;
         literal = advance();
       }
-      List<Interval> intervals = new LinkedList<>();
+      if (literal == '\0' || literal == ']' || literal == '-') {
+        Out.error("Invalid regex %s", val);
+        throw GeneratorException.error(ErrorType.ERR_REGEX_INVALID);
+      }
+      List<Range> ranges = new LinkedList<>();
       while (literal != '\0' && literal != ']') {
         if (peek() == '-') {
-          intervals.add(parseRange(literal));
+          ranges.add(parseRange(literal));
         } else if (literal == '\\') {
           literal = advance();
           Character escapedCh = ESCAPE_CHAR_MAP.get(literal);
@@ -207,22 +219,22 @@ public class Regex implements Iterable<RegexToken> {
             throw GeneratorException.error(ErrorType.ERR_REGEX_INVALID);
           }
           literal = escapedCh;
-          intervals.add(Interval.of(literal));
+          ranges.add(Range.of(literal));
         } else {
-          intervals.add(Interval.of(literal));
+          ranges.add(Range.of(literal));
         }
         literal = advance();
       }
-      return RegexToken.ofClass(intervals, inverted, detectQuantifier());
+      return RegexToken.ofClass(ranges, inverted, detectQuantifier());
     }
 
     /**
      * Parses a range within a character class.
      *
      * @param left the starting point of the range
-     * @return the parsed Interval instance
+     * @return the parsed range instance
      */
-    private Interval parseRange(char left) {
+    private Range parseRange(char left) {
       next(); // Ignore '-'
       char right = advance();
       if (!(Character.isLetterOrDigit(left) && Character.isLetterOrDigit(right))) {
@@ -240,7 +252,7 @@ public class Regex implements Iterable<RegexToken> {
         Out.error("Invalid char class in the regex %s range class values cannot be same", val);
         throw GeneratorException.error(ErrorType.ERR_REGEX_INVALID);
       }
-      return Interval.of(left, right);
+      return Range.of(left, right);
     }
   }
 }

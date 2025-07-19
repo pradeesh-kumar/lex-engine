@@ -5,10 +5,10 @@
 package org.lexengine.lexer.core;
 
 /**
- * Represents an interval defined by a start and end value. Intervals are immutable and can be
+ * Represents a range defined by a start and end value. Ranges are immutable and can be
  * created using the provided factory methods.
  */
-public class Interval implements Comparable<Interval> {
+public class Range implements Comparable<Range> {
 
   private final int start;
   private final int end;
@@ -17,40 +17,40 @@ public class Interval implements Comparable<Interval> {
   /**
    * Private constructor to prevent direct instantiation. Use the factory methods instead.
    *
-   * @param start the starting point of the interval
-   * @param end the ending point of the interval
+   * @param start the starting point of the range
+   * @param end the ending point of the range
    */
-  private Interval(int start, int end) {
+  private Range(int start, int end) {
     this.start = start;
     this.end = end;
     this.hashCode = calcHashCode();
   }
 
   /**
-   * Creates an interval from two values.
+   * Creates an range from two values.
    *
-   * @param start the starting point of the interval
-   * @param end the ending point of the interval
-   * @return a new Interval instance
+   * @param start the starting point of the range
+   * @param end the ending point of the range
+   * @return a new range instance
    * @throws IllegalArgumentException if start is greater than end
    */
-  public static Interval of(int start, int end) {
+  public static Range of(int start, int end) {
     if (start > end) {
       throw new IllegalArgumentException(
           String.format("start %d must be less than end %d", start, end));
     }
-    return new Interval(start, end);
+    return new Range(start, end);
   }
 
   /**
-   * Creates an interval from a single value, representing a closed range containing only that
+   * Creates an range from a single value, representing a closed range containing only that
    * value.
    *
    * @param val the value used as both start and end points
-   * @return a new Interval instance
+   * @return a new range instance
    */
-  public static Interval of(int val) {
-    return new Interval(val, val);
+  public static Range of(int val) {
+    return new Range(val, val);
   }
 
   @Override
@@ -79,31 +79,31 @@ public class Interval implements Comparable<Interval> {
     if (other == null) {
       return false;
     }
-    if (other instanceof Interval interval) {
-      return interval.start == start && interval.end == end;
+    if (other instanceof Range range) {
+      return range.start == start && range.end == end;
     }
     return false;
   }
 
   /**
-   * Checks whether this interval is equal to another interval.
+   * Checks whether this range is equal to another range.
    *
-   * @param other the interval to compare with
-   * @return true if the intervals are equal, false otherwise
+   * @param other the range to compare with
+   * @return true if the ranges are equal, false otherwise
    */
-  public boolean equals(Interval other) {
+  public boolean equals(Range other) {
     return other != null && start == other.start && end == other.end;
   }
 
   /**
-   * Compares this interval with another interval based on their start and end values.
+   * Compares this range with another range based on their start and end values.
    *
-   * @param other the interval to compare with
-   * @return a negative integer, zero, or a positive integer as this interval is less than, equal
-   *     to, or greater than the specified interval
+   * @param other the range to compare with
+   * @return a negative integer, zero, or a positive integer as this range is less than, equal
+   *     to, or greater than the specified range
    */
   @Override
-  public int compareTo(Interval other) {
+  public int compareTo(Range other) {
     if (this.start == other.start || this.end == other.end) {
       return 0;
     }
@@ -111,18 +111,18 @@ public class Interval implements Comparable<Interval> {
   }
 
   /**
-   * Returns the start value of this interval.
+   * Returns the start value of this range.
    *
-   * @return the start value of the interval
+   * @return the start value of the range
    */
   public int start() {
     return start;
   }
 
   /**
-   * Returns the end value of this interval.
+   * Returns the end value of this range.
    *
-   * @return the end value of the interval
+   * @return the end value of the range
    */
   public int end() {
     return end;

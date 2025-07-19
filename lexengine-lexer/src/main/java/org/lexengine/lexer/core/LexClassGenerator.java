@@ -128,17 +128,17 @@ class TableBasedLexClassGenerator implements LexClassGenerator {
    * Compresses the DFA's transition table into a base64-encoded string.
    *
    * This method first serializes the transition table into a byte array using
-   * {@link LexGenUtils#serialize2DArray(int[][])}. Then, it compresses the serialized data using
-   * {@link LexGenUtils#compress(byte[])}, and finally encodes the compressed data into a base64 string
+   * {@link LexUtils#serialize2DArray(int[][])}. Then, it compresses the serialized data using
+   * {@link LexUtils#compress(byte[])}, and finally encodes the compressed data into a base64 string
    * using {@link Base64#getEncoder()}.
    *
    * @return the compressed transition table as a base64-encoded string
    */
   private String getCompressedTransitionTbl() {
     int[][] transitionTbl = dfa.transitionTbl();
-    byte[] serializedData = LexGenUtils.serialize2DArray(transitionTbl);
+    byte[] serializedData = LexUtils.serialize2DArray(transitionTbl);
     try {
-      byte[] compressedData = LexGenUtils.compress(serializedData);
+      byte[] compressedData = LexUtils.compress(serializedData);
       return Base64.getEncoder().encodeToString(compressedData);
     } catch (IOException e) {
       Out.error("Error while compressing the transition table!", e);
@@ -198,7 +198,7 @@ class TableBasedLexClassGenerator implements LexClassGenerator {
   private String getAlphabetIndex() {
     StringBuilder out = new StringBuilder();
     String format = "    map.put(%d, %d);\n";
-    for (Map.Entry<Interval, Integer> entry : dfa.alphabetIndex().entrySet()) {
+    for (Map.Entry<Range, Integer> entry : dfa.alphabetIndex().entrySet()) {
       for (int c = entry.getKey().start(); c <= entry.getKey().end(); c++) {
         out.append(String.format(format, c, entry.getValue()));
       }

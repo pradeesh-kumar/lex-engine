@@ -19,8 +19,8 @@ public class RegexTokenTest {
     // Assert
     assertEquals(RegexToken.Type.Literal, token.type());
     assertEquals((int) 'a', token.chVal());
-    assertNotNull(token.interval());
-    assertEquals(Interval.of(97, 97), token.interval()); // ASCII value of 'a'
+    assertNotNull(token.range());
+    assertEquals(Range.of(97, 97), token.range()); // ASCII value of 'a'
     assertFalse(token.hasQuantifier());
   }
 
@@ -32,8 +32,8 @@ public class RegexTokenTest {
     // Assert
     assertEquals(RegexToken.Type.Literal, token.type());
     assertEquals((int) 'a', token.chVal());
-    assertNotNull(token.interval());
-    assertEquals(Interval.of(97, 97), token.interval()); // ASCII value of 'a'
+    assertNotNull(token.range());
+    assertEquals(Range.of(97, 97), token.range()); // ASCII value of 'a'
     assertTrue(token.hasQuantifier());
     assertEquals('*', token.quantifier());
   }
@@ -41,15 +41,15 @@ public class RegexTokenTest {
   @Test
   void testOfClass_CharacterClassTokenCreated() {
     // Arrange
-    List<Interval> intervals = List.of(Interval.of(65, 90)); // A-Z
+    List<Range> ranges = List.of(Range.of(65, 90)); // A-Z
 
     // Act
-    RegexToken token = RegexToken.ofClass(intervals, false, '\0');
+    RegexToken token = RegexToken.ofClass(ranges, false, '\0');
 
     // Assert
     assertEquals(RegexToken.Type.CharClass, token.type());
-    assertEquals(intervals, token.intervals());
-    assertNull(token.interval());
+    assertEquals(ranges, token.ranges());
+    assertNull(token.range());
     assertEquals('\0', token.chVal());
     assertFalse(token.hasQuantifier());
   }
@@ -57,15 +57,15 @@ public class RegexTokenTest {
   @Test
   void testOfClass_InvertedCharacterClassTokenCreated() {
     // Arrange
-    List<Interval> intervals = List.of(Interval.of(65, 90)); // A-Z
+    List<Range> ranges = List.of(Range.of(65, 90)); // A-Z
 
     // Act
-    RegexToken token = RegexToken.ofClass(intervals, true, '\0');
+    RegexToken token = RegexToken.ofClass(ranges, true, '\0');
 
     // Assert
     assertEquals(RegexToken.Type.InvertedCharClass, token.type());
-    assertEquals(intervals, token.intervals());
-    assertNull(token.interval());
+    assertEquals(ranges, token.ranges());
+    assertNull(token.range());
     assertEquals('\0', token.chVal());
     assertFalse(token.hasQuantifier());
   }

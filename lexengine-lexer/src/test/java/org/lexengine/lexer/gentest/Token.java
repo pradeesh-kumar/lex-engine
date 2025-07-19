@@ -40,7 +40,8 @@ public class Token {
     LESS,
     CLOSE_BRACE,
     DIV,
-    OPEN_PAREN
+    OPEN_PAREN,
+    COMMENT
   }
 
   private String strVal;
@@ -71,6 +72,12 @@ public class Token {
   public static Token of(Type type) {
     Token token = new Token();
     token.type = type;
+    return token;
+  }
+
+  public static Token comment() {
+    Token token = new Token();
+    token.type = Type.COMMENT;
     return token;
   }
 

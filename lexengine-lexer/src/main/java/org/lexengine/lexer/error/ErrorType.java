@@ -7,6 +7,9 @@ package org.lexengine.lexer.error;
 /** Enum representing different types of errors that can occur during processing. */
 public enum ErrorType {
 
+  /** Invalid spec file. */
+  ERR_SPEC_FILE_INVALID,
+
   /** Error occurred while reading spec file. */
   ERR_SPEC_FILE_READ,
 
