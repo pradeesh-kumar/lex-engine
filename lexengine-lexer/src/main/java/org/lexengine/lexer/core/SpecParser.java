@@ -11,43 +11,30 @@ import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
-
+import org.lexengine.commons.logging.Out;
 import org.lexengine.lexer.error.ErrorType;
 import org.lexengine.lexer.error.GeneratorException;
-import org.lexengine.lexer.logging.Out;
 
-/**
- * A parser for lexer spec files that extracts regular expressions and actions from the file.
- */
+/** A parser for lexer spec files that extracts regular expressions and actions from the file. */
 public class SpecParser {
 
-  /**
-   * Divider string used to separate sections within the lexer spec file.
-   */
+  /** Divider string used to separate sections within the lexer spec file. */
   private static final String DIVIDER = "---";
 
-  /**
-   * Comment prefix used to ignore lines starting with it.
-   */
+  /** Comment prefix used to ignore lines starting with it. */
   private static final char COMMENT = '#';
 
   private final File specFile;
   private final LexSpec.Builder specBuilder;
   private int lineCount;
 
-  /**
-   * Currently activated line parser
-   */
+  /** Currently activated line parser */
   private LineParser lineParser;
 
-  /**
-   * Number of dividers encountered during spec-file's line reading
-   */
+  /** Number of dividers encountered during spec-file's line reading */
   private int dividerCount;
 
-  /**
-   * Array of line parsers at divider Index
-   */
+  /** Array of line parsers at divider Index */
   private final LineParser[] lineParsers;
 
   /**
@@ -57,22 +44,22 @@ public class SpecParser {
    */
   SpecParser(File specFile) {
     this.specFile = specFile;
-    this.specBuilder = new LexSpec.Builder();
-    this.lineParsers = new LineParser[]{new MetadataLineParser(), new RegexLineParser()};
+    this.specBuilder = LexSpec.builder();
+    this.lineParsers = new LineParser[] {new MetadataLineParser(), new RegexLineParser()};
     switchLineParser();
   }
 
   /**
    * Switches the current line parser to the next one based on the divider count.
    *
-   * <p>If the divider count exceeds the number of available line parsers,
-   * it throws a GeneratorException with an error type indicating an invalid spec file.
+   * <p>If the divider count exceeds the number of available line parsers, it throws a
+   * GeneratorException with an error type indicating an invalid spec file.
    *
    * @throws GeneratorException if the divider count exceeds the number of available line parsers
    */
   private void switchLineParser() {
     if (dividerCount >= lineParsers.length) {
-      Out.error("Invalid spec file! Unexpected divider found at line %d",  lineCount);
+      Out.error("Invalid spec file! Unexpected divider found at line %d", lineCount);
       throw GeneratorException.error(ErrorType.ERR_SPEC_FILE_INVALID);
     }
     lineParser = lineParsers[dividerCount++];
@@ -83,7 +70,7 @@ public class SpecParser {
    *
    * @throws GeneratorException if an error occurs during parsing
    */
-  public LexSpec parseSpec() {
+  public LexSpec parse() {
     Out.debug("Parsing the Lexer Spec file %s", specFile);
     try (Stream<String> lines = Files.lines(specFile.toPath())) {
       lines
@@ -109,9 +96,7 @@ public class SpecParser {
     return specBuilder.build();
   }
 
-  /**
-   * For parsing line for various sections in the spec file.
-   */
+  /** For parsing line for various sections in the spec file. */
   private interface LineParser {
     void parseLine(String line);
   }
@@ -143,7 +128,8 @@ public class SpecParser {
         case "methodName" -> specBuilder.methodName(propValue);
         case "returnType" -> specBuilder.returnType(propValue);
         default -> {
-          Out.error("Invalid property line: '%s' in the lexer spec file at line %d!", line, lineCount);
+          Out.error(
+              "Invalid property line: '%s' in the lexer spec file at line %d!", line, lineCount);
           throw GeneratorException.error(ErrorType.ERR_PROPERTY_ERR);
         }
       }

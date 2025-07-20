@@ -1,13 +1,13 @@
 /*
-* Copyright (c) 2024 lex-engine
-* Author: Pradeesh Kumar
-*/
+ * Copyright (c) 2024 lex-engine
+ * Author: Pradeesh Kumar
+ */
 package org.lexengine.lexer.core;
 
 import java.util.List;
+import org.lexengine.commons.logging.Out;
 import org.lexengine.lexer.error.ErrorType;
 import org.lexengine.lexer.error.GeneratorException;
-import org.lexengine.lexer.logging.Out;
 
 /** Represents a regular expression token used for regex tokenization. */
 public class RegexToken {
@@ -74,8 +74,7 @@ public class RegexToken {
               case '|' -> Type.Bar;
               default -> Type.Literal;
             };
-    if ((token.type == Type.Bar || token.type == Type.LParen)
-        && token.quantifier != '\0') {
+    if ((token.type == Type.Bar || token.type == Type.LParen) && token.quantifier != '\0') {
       Out.error("Invalid regular expression: " + literal);
       throw GeneratorException.error(ErrorType.ERR_REGEX_ERR);
     }

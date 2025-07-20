@@ -23,8 +23,7 @@
             <name>Pradeesh Kumar</name>
             <email>pradeeshbm@ymail.com</email>
             <roles>
-                <role>Founder</role>
-                <role>Developer</role>
+                <role>Author</role>
             </roles>
             <timezone>GMT</timezone>
         </developer>
@@ -36,6 +35,7 @@
     </issueManagement>
 
     <modules>
+        <module>lexengine-commons</module>
         <module>lexengine-lexer</module>
         <module>lexengine-parser</module>
         <module>lexengine-examples</module>
@@ -97,9 +97,9 @@
                         <removeUnusedImports/>
                         <formatAnnotations/>
                         <trimTrailingWhitespace/>
-                        <licenseHeader>
-                            <file>copyright.txt</file>
-                        </licenseHeader>
+<!--                        <licenseHeader>-->
+<!--                            <file>${project.basedir}/copyright.txt</file>-->
+<!--                        </licenseHeader>-->
                         <indent>
                             <spaces>true</spaces>
                             <spacesPerTab>2</spacesPerTab>

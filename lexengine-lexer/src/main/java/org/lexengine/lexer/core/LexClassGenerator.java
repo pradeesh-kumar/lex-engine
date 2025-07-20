@@ -1,7 +1,7 @@
 /*
-* Copyright (c) 2024 lex-engine
-* Author: Pradeesh Kumar
-*/
+ * Copyright (c) 2024 lex-engine
+ * Author: Pradeesh Kumar
+ */
 package org.lexengine.lexer.core;
 
 import java.io.FileWriter;
@@ -13,56 +13,45 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.lexengine.commons.logging.Out;
 import org.lexengine.lexer.error.ErrorType;
 import org.lexengine.lexer.error.GeneratorException;
-import org.lexengine.lexer.logging.Out;
 
 /**
- * An interface representing a generator for lexical classes. Implementations of this interface should provide
- * functionality to generate lexical classes based on specific requirements or configurations.
+ * An interface representing a generator for lexical classes. Implementations of this interface
+ * should provide functionality to generate lexical classes based on specific requirements or
+ * configurations.
  */
 public interface LexClassGenerator {
 
-  /**
-   * Generates the lexical class according to the implementation's logic.
-   */
+  /** Generates the lexical class according to the implementation's logic. */
   void generate();
 }
 
 /**
  * A generator for Lexer Class based on a deterministic finite automaton (DFA).
  *
- * This class generates a Lexer Class based on the provided DFA and lexical specification.
- * It uses a table-based approach to represent the DFA's transition table and final states.
+ * <p>This class generates a Lexer Class based on the provided DFA and lexical specification. It
+ * uses a table-based approach to represent the DFA's transition table and final states.
  */
 class TableBasedLexClassGenerator implements LexClassGenerator {
 
-  /**
-   * Regular expression pattern for matching placeholders in the template file.
-   */
+  /** Regular expression pattern for matching placeholders in the template file. */
   private static final Pattern PLACEHOLDER_PATTERN = Pattern.compile("\\$\\{(\\w+)}");
 
   private static final String COMMA = ", ";
   private static final String NEW_LINE_STR = System.lineSeparator();
 
-  /**
-   * The DFA used to generate the lexical class.
-   */
+  /** The DFA used to generate the lexical class. */
   private final Dfa dfa;
 
-  /**
-   * The lexical specification for the generated class.
-   */
+  /** The lexical specification for the generated class. */
   private final LexSpec lexSpec;
 
-  /**
-   * Output directory where the generated class will be written.
-   */
+  /** Output directory where the generated class will be written. */
   private final Path outDir;
 
-  /**
-   * Template file for the scanner class.
-   */
+  /** Template file for the scanner class. */
   private final Path scannerClassTemplate;
 
   /**
@@ -81,9 +70,7 @@ class TableBasedLexClassGenerator implements LexClassGenerator {
     this.scannerClassTemplate = scannerClassTemplate;
   }
 
-  /**
-   * Generates the Lexer Class based on the provided DFA and lexical specification.
-   */
+  /** Generates the Lexer Class based on the provided DFA and lexical specification. */
   public void generate() {
     Map<String, String> context = new HashMap<>();
     context.put("className", lexSpec.lexClassName());
@@ -127,10 +114,10 @@ class TableBasedLexClassGenerator implements LexClassGenerator {
   /**
    * Compresses the DFA's transition table into a base64-encoded string.
    *
-   * This method first serializes the transition table into a byte array using
-   * {@link LexUtils#serialize2DArray(int[][])}. Then, it compresses the serialized data using
-   * {@link LexUtils#compress(byte[])}, and finally encodes the compressed data into a base64 string
-   * using {@link Base64#getEncoder()}.
+   * <p>This method first serializes the transition table into a byte array using {@link
+   * LexUtils#serialize2DArray(int[][])}. Then, it compresses the serialized data using {@link
+   * LexUtils#compress(byte[])}, and finally encodes the compressed data into a base64 string using
+   * {@link Base64#getEncoder()}.
    *
    * @return the compressed transition table as a base64-encoded string
    */
@@ -149,8 +136,8 @@ class TableBasedLexClassGenerator implements LexClassGenerator {
   /**
    * Returns a comma-separated string representation of the final states in the DFA.
    *
-   * This method converts the final states bitset to an array of long integers, then formats each value as a string
-   * and joins them together with commas.
+   * <p>This method converts the final states bitset to an array of long integers, then formats each
+   * value as a string and joins them together with commas.
    *
    * @return a string containing the final states separated by commas
    */
@@ -163,8 +150,8 @@ class TableBasedLexClassGenerator implements LexClassGenerator {
   /**
    * Generates a string representation of switch cases for final states in the DFA.
    *
-   * This method groups the actions by their values and constructs a string containing switch cases
-   * for each group. Each case corresponds to a set of states that share the same action.
+   * <p>This method groups the actions by their values and constructs a string containing switch
+   * cases for each group. Each case corresponds to a set of states that share the same action.
    *
    * @return a string containing the switch cases for final states
    */
@@ -175,23 +162,24 @@ class TableBasedLexClassGenerator implements LexClassGenerator {
         actions.entrySet().stream().collect(Collectors.groupingBy(Map.Entry::getValue)).entrySet();
 
     return reverse.stream()
-      .map(
-          e -> {
-            String caseValues =
-                e.getValue().stream()
-                    .map(Map.Entry::getKey)
-                    .map(String::valueOf)
-                    .collect(Collectors.joining(", "));
-            return String.format(caseFormat, caseValues, e.getKey().toString());
-          })
-      .collect(Collectors.joining(NEW_LINE_STR));
+        .map(
+            e -> {
+              String caseValues =
+                  e.getValue().stream()
+                      .map(Map.Entry::getKey)
+                      .map(String::valueOf)
+                      .collect(Collectors.joining(", "));
+              return String.format(caseFormat, caseValues, e.getKey().toString());
+            })
+        .collect(Collectors.joining(NEW_LINE_STR));
   }
 
   /**
    * Returns a string representation of the alphabet index mappings.
    *
-   * This method iterates over the DFA's alphabet index entries and constructs a string containing
-   * statements that populate a map with the alphabet characters and their corresponding indices.
+   * <p>This method iterates over the DFA's alphabet index entries and constructs a string
+   * containing statements that populate a map with the alphabet characters and their corresponding
+   * indices.
    *
    * @return a string containing the alphabet index mappings
    */

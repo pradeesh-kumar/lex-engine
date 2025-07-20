@@ -26,8 +26,7 @@
             <name>Pradeesh Kumar</name>
             <email>pradeeshbm@ymail.com</email>
             <roles>
-                <role>Founder</role>
-                <role>Developer</role>
+                <role>Author</role>
             </roles>
             <timezone>GMT</timezone>
         </developer>
@@ -43,5 +42,44 @@
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.lexengine</groupId>
+            <artifactId>lexengine-commons</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>org.lexengine</groupId>
+            <artifactId>lexengine-lexer</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.5.1</version>
+                <executions>
+                    <execution>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <mainClass>org.lexengine.lexer.Main</mainClass>
+                    <arguments>
+                        <argument>-v</argument>
+                        <argument>-d</argument>
+                        <argument>target/generated-sources</argument>
+                    </arguments>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>

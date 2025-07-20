@@ -1,7 +1,7 @@
 /*
-* Copyright (c) 2024 lex-engine
-* Author: Pradeesh Kumar
-*/
+ * Copyright (c) 2024 lex-engine
+ * Author: Pradeesh Kumar
+ */
 package org.lexengine.lexer.core;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -15,74 +15,74 @@ import org.lexengine.lexer.error.GeneratorException;
 public class SpecParserTest {
 
   @Test
-  public void testParseSpecValidFile() {
+  public void testParseValidFile() {
     File testSpecFile =
         new File(getClass().getClassLoader().getResource("lexer-spec.spec").getFile());
     SpecParser parser = new SpecParser(testSpecFile);
-    LexSpec lexSpec = parser.parseSpec();
+    LexSpec lexSpec = parser.parse();
 
-    assertEquals(15, lexSpec.regexActionList().size());
+    assertEquals(16, lexSpec.regexActionList().size());
     assertEquals("MyLexer", lexSpec.lexClassName());
     assertEquals("org.lexengine.lexer.generated", lexSpec.lexPackageName());
   }
 
   @Test
-  public void testParseSpecEmptyFile() {
+  public void testParseEmptyFile() {
     File tempFile = createTempSpecFile("");
     assertThrows(
         GeneratorException.class,
         () -> {
           SpecParser parser = new SpecParser(tempFile);
-          parser.parseSpec();
+          parser.parse();
         });
     deleteTempFile(tempFile);
   }
 
   @Test
-  public void testParseSpecInvalidPropertyLine() {
+  public void testParseInvalidPropertyLine() {
     File tempFile = createTempSpecFile("invalid_property\n");
     assertThrows(
         GeneratorException.class,
         () -> {
           SpecParser parser = new SpecParser(tempFile);
-          parser.parseSpec();
+          parser.parse();
         });
     deleteTempFile(tempFile);
   }
 
   @Test
-  public void testParseSpecInvalidRegexLine() {
+  public void testParseInvalidRegexLine() {
     File tempFile = createTempSpecFile("---\n", "invalid_regex\n");
     assertThrows(
         GeneratorException.class,
         () -> {
           SpecParser parser = new SpecParser(tempFile);
-          parser.parseSpec();
+          parser.parse();
         });
     deleteTempFile(tempFile);
   }
 
   @Test
-  public void testParseSpecMissingDivider() {
+  public void testParseMissingDivider() {
     File tempFile = createTempSpecFile("\"hello\" world\n");
     assertThrows(
         GeneratorException.class,
         () -> {
           SpecParser parser = new SpecParser(tempFile);
-          parser.parseSpec();
+          parser.parse();
         });
     deleteTempFile(tempFile);
   }
 
   @Test
-  public void testParseSpecNoEntriesFound() {
+  public void testParseNoEntriesFound() {
     File tempFile =
         createTempSpecFile("# This is a comment\n", "class=MyClass\n", "package=com.example\n");
     assertThrows(
         GeneratorException.class,
         () -> {
           SpecParser parser = new SpecParser(tempFile);
-          parser.parseSpec();
+          parser.parse();
         });
     deleteTempFile(tempFile);
   }

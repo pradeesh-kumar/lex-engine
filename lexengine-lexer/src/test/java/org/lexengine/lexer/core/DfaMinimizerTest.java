@@ -1,7 +1,7 @@
 /*
-* Copyright (c) 2024 lex-engine
-* Author: Pradeesh Kumar
-*/
+ * Copyright (c) 2024 lex-engine
+ * Author: Pradeesh Kumar
+ */
 package org.lexengine.lexer.core;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -9,7 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 import org.junit.jupiter.api.Test;
-import org.lexengine.lexer.util.Options;
+import org.lexengine.lexer.util.LexerOptions;
 
 public class DfaMinimizerTest {
 
@@ -30,8 +30,10 @@ public class DfaMinimizerTest {
 
   @Test
   void testMatchesAndNonMatches_case2() {
-    Options.verbose = true;
-    Dfa minDfa = new DfaMinimizer(new DfaGenerator(TestUtils.generateNfa("lexer-spec.spec")).generate()).minimize();
+    LexerOptions.verbose = true;
+    Dfa minDfa =
+        new DfaMinimizer(new DfaGenerator(TestUtils.generateNfa("lexer-spec.spec")).generate())
+            .minimize();
     assertAction(minDfa.test("new"), "{ return Token.keyword(Token.Type.NEW); }");
     assertAction(minDfa.test("int"), "{ return Token.keyword(Token.Type.INT); }");
     assertAction(minDfa.test("float"), "{ return Token.keyword(Token.Type.FLOAT); }");

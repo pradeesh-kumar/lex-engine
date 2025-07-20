@@ -1,7 +1,7 @@
 /*
-* Copyright (c) 2024 lex-engine
-* Author: Pradeesh Kumar
-*/
+ * Copyright (c) 2024 lex-engine
+ * Author: Pradeesh Kumar
+ */
 package org.lexengine.lexer.core;
 
 import java.util.BitSet;
@@ -10,7 +10,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import org.lexengine.lexer.logging.Out;
+import org.lexengine.commons.logging.Out;
 
 /**
  * Responsible for generating a minimal Deterministic Finite Automaton (DFA) from a given DFA. It

@@ -1,15 +1,14 @@
 package org.lexengine.lexer.util;
 
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
-
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class DynamicCharBufferTest {
 
@@ -125,6 +124,8 @@ public class DynamicCharBufferTest {
     InputStream inputStream = new ByteArrayInputStream("".getBytes(StandardCharsets.UTF_8));
     Reader reader = new InputStreamReader(inputStream);
     int invalidInitialCapacity = 0;
-    assertThrows(IllegalArgumentException.class, () -> new DynamicCharBuffer(reader, invalidInitialCapacity));
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> new DynamicCharBuffer(reader, invalidInitialCapacity));
   }
 }

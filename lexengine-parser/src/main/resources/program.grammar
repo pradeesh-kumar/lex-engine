@@ -1,0 +1,16 @@
+# This is a Parser Grammar Specification file.
+# Each section is separated by the delimiter '---'
+# Line starts with '#' are treated as comments.
+
+
+# Metadata Section
+
+---
+# Grammar Definitions
+# Productions must be in upper case.
+# Terminals must be in lower case
+# Note: Please do not use the token character '|' in the token returned by the Lexer.
+# This has special meaning 'alternative' Parser grammar. Use the name 'or' instead.
+EXPR -> EXPR + TERM | EXPR - TERM | TERM
+TERM -> TERM * FACTOR | TERM / FACTOR | FACTOR
+FACTOR -> ident | num | (EXPR)

@@ -1,12 +1,12 @@
 /*
-* Copyright (c) 2024 lex-engine
-* Author: Pradeesh Kumar
-*/
+ * Copyright (c) 2024 lex-engine
+ * Author: Pradeesh Kumar
+ */
 package org.lexengine.lexer.core;
 
 /**
- * Represents a range defined by a start and end value. Ranges are immutable and can be
- * created using the provided factory methods.
+ * Represents a range defined by a start and end value. Ranges are immutable and can be created
+ * using the provided factory methods.
  */
 public class Range implements Comparable<Range> {
 
@@ -43,8 +43,7 @@ public class Range implements Comparable<Range> {
   }
 
   /**
-   * Creates an range from a single value, representing a closed range containing only that
-   * value.
+   * Creates an range from a single value, representing a closed range containing only that value.
    *
    * @param val the value used as both start and end points
    * @return a new range instance
@@ -99,8 +98,8 @@ public class Range implements Comparable<Range> {
    * Compares this range with another range based on their start and end values.
    *
    * @param other the range to compare with
-   * @return a negative integer, zero, or a positive integer as this range is less than, equal
-   *     to, or greater than the specified range
+   * @return a negative integer, zero, or a positive integer as this range is less than, equal to,
+   *     or greater than the specified range
    */
   @Override
   public int compareTo(Range other) {

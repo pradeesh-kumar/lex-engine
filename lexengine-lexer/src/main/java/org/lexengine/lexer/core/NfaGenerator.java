@@ -1,16 +1,16 @@
 /*
-* Copyright (c) 2024 lex-engine
-* Author: Pradeesh Kumar
-*/
+ * Copyright (c) 2024 lex-engine
+ * Author: Pradeesh Kumar
+ */
 package org.lexengine.lexer.core;
 
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import org.lexengine.commons.logging.Out;
 import org.lexengine.lexer.error.ErrorType;
 import org.lexengine.lexer.error.GeneratorException;
-import org.lexengine.lexer.logging.Out;
 
 /**
  * Generates an NFA (Non-Deterministic Finite Automaton) from a list of regular expressions and

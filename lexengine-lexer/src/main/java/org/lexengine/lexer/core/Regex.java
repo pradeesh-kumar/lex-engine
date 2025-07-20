@@ -1,7 +1,7 @@
 /*
-* Copyright (c) 2024 lex-engine
-* Author: Pradeesh Kumar
-*/
+ * Copyright (c) 2024 lex-engine
+ * Author: Pradeesh Kumar
+ */
 package org.lexengine.lexer.core;
 
 import java.util.Iterator;
@@ -9,24 +9,25 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.lexengine.commons.logging.Out;
 import org.lexengine.lexer.error.ErrorType;
 import org.lexengine.lexer.error.GeneratorException;
-import org.lexengine.lexer.logging.Out;
 
 /**
  * Represents a regular expression pattern that can be iterated over to produce individual tokens.
  */
 public class Regex implements Iterable<RegexToken> {
 
-  /** A set of meta-characters used in regular expressions.
-   * Meta Chars
+  /**
+   * A set of meta-characters used in regular expressions. Meta Chars
+   *
    * <ul>
-   *   <li>* matches zero or more occurrence of the preceding element</li>
-   *   <li>+ matches one or more occurrence of the preceding element</li>
-   *   <li>? matches zero or one occurrence of the preceding element</li>
-   *   <li>. matches any single char</li>
+   *   <li>* matches zero or more occurrence of the preceding element
+   *   <li>+ matches one or more occurrence of the preceding element
+   *   <li>? matches zero or one occurrence of the preceding element
+   *   <li>. matches any single char
    * </ul>
-   * */
+   */
   private static final Set<Character> META_CHARS =
       Set.of('|', '.', '^', '*', '+', '?', '(', ')', '{', '}', '[', ']');
 
@@ -99,7 +100,8 @@ public class Regex implements Iterable<RegexToken> {
       RegexToken token = itr.next();
       if (token.type().isMetaChar()) {
         if (token.type() == RegexToken.Type.Dot && !widerRangeAdded) {
-          // From space till ~ symbol. This includes symbols, both lower and upper case alphabets and digits.
+          // From space till ~ symbol. This includes symbols, both lower and upper case alphabets
+          // and digits.
           ranges.add(Range.of(32, 126));
           widerRangeAdded = true;
         }

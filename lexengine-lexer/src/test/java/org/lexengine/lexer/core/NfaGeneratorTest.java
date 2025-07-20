@@ -1,7 +1,7 @@
 /*
-* Copyright (c) 2024 lex-engine
-* Author: Pradeesh Kumar
-*/
+ * Copyright (c) 2024 lex-engine
+ * Author: Pradeesh Kumar
+ */
 package org.lexengine.lexer.core;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -9,12 +9,12 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 import org.junit.jupiter.api.Test;
-import org.lexengine.lexer.util.Options;
+import org.lexengine.lexer.util.LexerOptions;
 
 public class NfaGeneratorTest {
 
   static {
-    Options.verbose = false;
+    LexerOptions.verbose = false;
   }
 
   @Test

@@ -7,7 +7,7 @@
 
 **Lex-Engine** is a lexical analyser and parser tool to recognize a language from the given grammar and build the syntax tree. It's written in Java.
 
-# Supported Wildcard Characters in the Regex
+## Supported Wildcard Characters in the Regex
 ```
 * Matches zero or more occurrences of the preceding element
 + Matches one or more occurrences of the preceding element
@@ -15,10 +15,10 @@
 . Matches any character
 ```
 
-# How to Build
+## How to Build
 To build the packages, follow these steps:
 
-# Contributing
+## Contributing
 Lex-Engine is free software, contributions are welcome.
 
 Author: Pradeesh Kumar

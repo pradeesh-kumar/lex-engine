@@ -1,11 +1,10 @@
 /*
-* Copyright (c) 2024 lex-engine
-* Author: Pradeesh Kumar
-*/
-package org.lexengine.lexer.logging;
+ * Copyright (c) 2024 lex-engine
+ * Author: Pradeesh Kumar
+ */
+package org.lexengine.commons.logging;
 
 import java.io.PrintWriter;
-import org.lexengine.lexer.util.Options;
 
 /** A utility class providing methods for logging messages at different levels. */
 public class Out {
@@ -14,7 +13,11 @@ public class Out {
 
   public static final String VERSION = "v1.0.0";
 
-  private Out() {}
+  private static boolean debugEnabled;
+
+  public static void enableDebug() {
+    debugEnabled = true;
+  }
 
   private static final PrintWriter out = new PrintWriter(System.out, true);
 
@@ -27,11 +30,11 @@ public class Out {
   }
 
   public static void debug(String msg) {
-    if (Options.verbose) write(Level.DEBUG, msg);
+    if (debugEnabled) write(Level.DEBUG, msg);
   }
 
   public static void debug(String msg, Object... args) {
-    if (Options.verbose) write(Level.DEBUG, msg, args);
+    if (debugEnabled) write(Level.DEBUG, msg, args);
   }
 
   public static void warn(String msg) {
@@ -59,7 +62,7 @@ public class Out {
   }
 
   public static void printBanner() {
-    out.write("Pradeesh - Compiler Lexer Generator version: " + VERSION);
+    out.write("LexEngine - Compiler Lexer and Parser Generator version: " + VERSION);
   }
 
   enum Level {

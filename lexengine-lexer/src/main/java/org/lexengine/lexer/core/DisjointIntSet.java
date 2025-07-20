@@ -1,7 +1,7 @@
 /*
-* Copyright (c) 2024 lex-engine
-* Author: Pradeesh Kumar
-*/
+ * Copyright (c) 2024 lex-engine
+ * Author: Pradeesh Kumar
+ */
 package org.lexengine.lexer.core;
 
 import java.util.*;
@@ -11,9 +11,9 @@ import java.util.stream.Collectors;
 /**
  * A data structure representing a set of non-overlapping integer ranges.
  *
- * <p>This class allows you to store and manage multiple ranges of integers, ensuring that they
- * do not overlap with each other. It provides methods for adding individual values or ranges,
- * checking intersections, and retrieving the stored ranges.
+ * <p>This class allows you to store and manage multiple ranges of integers, ensuring that they do
+ * not overlap with each other. It provides methods for adding individual values or ranges, checking
+ * intersections, and retrieving the stored ranges.
  *
  * <p>Note: This is a lazy disjoint data structure. Which means that, the disjoint operation doesn't
  * happen immediately whenever you add new elements. Rather It happens implicitly when you call the
@@ -130,8 +130,7 @@ public class DisjointIntSet {
   }
 
   /**
-   * Retrieves the range that contains the specified code point, if such an range exists in
-   * the set.
+   * Retrieves the range that contains the specified code point, if such an range exists in the set.
    *
    * @param codePoint the code point to search for
    * @return the range containing the code point, or null if no such range exists
@@ -166,12 +165,12 @@ public class DisjointIntSet {
   }
 
   /**
-   * Retrieves all unique ranges from this set that intersect with any of the ranges in the
-   * given collection.
+   * Retrieves all unique ranges from this set that intersect with any of the ranges in the given
+   * collection.
    *
    * @param ranges the collection of ranges to find intersections with
-   * @return a list of unique ranges from this set that intersect with at least one range in
-   *     the given collection
+   * @return a list of unique ranges from this set that intersect with at least one range in the
+   *     given collection
    */
   public List<Range> getIntersection(Collection<Range> ranges) {
     return ranges.stream().map(this::getIntersection).flatMap(List::stream).distinct().toList();
@@ -255,9 +254,9 @@ public class DisjointIntSet {
   }
 
   /**
-   * Returns the APPROXIMATE number of ranges currently stored in the set. The size is
-   * approximate since this data structure is Lazy. The actual size is determined when implicit call
-   * to doDisjoint() method is invoked.
+   * Returns the APPROXIMATE number of ranges currently stored in the set. The size is approximate
+   * since this data structure is Lazy. The actual size is determined when implicit call to
+   * doDisjoint() method is invoked.
    *
    * @return the size of the set
    */

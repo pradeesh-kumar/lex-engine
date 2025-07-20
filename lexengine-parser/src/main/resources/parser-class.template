@@ -1,0 +1,9 @@
+package ${package};
+
+/**
+ * A lexer implementation that tokenizes input from a given source path or reader.
+ */
+public class ${className} {
+
+
+}

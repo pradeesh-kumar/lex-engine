@@ -1,7 +1,7 @@
 /*
-* Copyright (c) 2024 lex-engine
-* Author: Pradeesh Kumar
-*/
+ * Copyright (c) 2024 lex-engine
+ * Author: Pradeesh Kumar
+ */
 package org.lexengine.lexer.core;
 
 import java.util.BitSet;
@@ -44,8 +44,7 @@ public class Dfa {
    * @param languageAlphabets set of language alphabets used by the DFA
    * @param alphabetIndex mapping of ranges to alphabet indices
    */
-  public Dfa(
-      int statesCount, DisjointIntSet languageAlphabets, Map<Range, Integer> alphabetIndex) {
+  public Dfa(int statesCount, DisjointIntSet languageAlphabets, Map<Range, Integer> alphabetIndex) {
     this.alphabetSize = languageAlphabets.size();
     this.statesCount = 1; // 0 is dedicated for phi state
     this.transitionTbl = new int[statesCount + 1][this.alphabetSize];

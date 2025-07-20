@@ -1,7 +1,7 @@
 /*
-* Copyright (c) 2024 lex-engine
-* Author: Pradeesh Kumar
-*/
+ * Copyright (c) 2024 lex-engine
+ * Author: Pradeesh Kumar
+ */
 package org.lexengine.lexer.core;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -23,11 +23,7 @@ public class DisjointIntSetTest {
     assertEquals(4, disjointed.size());
     assertEquals(
         disjointed,
-        List.of(
-            Range.of(97, 97),
-            Range.of(98, 99),
-            Range.of(100, 100),
-            Range.of(101, 108)));
+        List.of(Range.of(97, 97), Range.of(98, 99), Range.of(100, 100), Range.of(101, 108)));
 
     assertIntersection(set, 97, 97, List.of(Range.of(97, 97)));
     assertIntersection(set, 100, 100, List.of(Range.of(100, 100)));

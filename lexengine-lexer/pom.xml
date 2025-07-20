@@ -26,8 +26,7 @@
             <name>Pradeesh Kumar</name>
             <email>pradeeshbm@ymail.com</email>
             <roles>
-                <role>Founder</role>
-                <role>Developer</role>
+                <role>Author</role>
             </roles>
             <timezone>GMT</timezone>
         </developer>
@@ -43,5 +42,13 @@
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.lexengine</groupId>
+            <artifactId>lexengine-commons</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+    </dependencies>
 
 </project>
