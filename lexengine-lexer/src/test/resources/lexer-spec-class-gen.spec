@@ -21,7 +21,7 @@ returnType=Token
 "int" { return Token.of(Token.Type.INT); }
 "if" { return Token.of(Token.Type.IF); }
 "throw" { return Token.of(Token.Type.THROW); }
-"this" { return Token.of(Token.Type.THIS); }
+"this" { return Token.of(Token.Type.THIS); }c
 "new" { return Token.of(Token.Type.NEW); }
 
 "\." { return Token.of(Token.Type.DOT); }

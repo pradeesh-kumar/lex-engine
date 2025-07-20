@@ -86,6 +86,7 @@ class TableBasedLexClassGenerator implements LexClassGenerator {
     context.put("alphabetIndex", getAlphabetIndex());
 
     Path outFile = outDir.resolve(lexSpec.lexClassName() + ".java");
+    Out.info("Generating lexer class file at %s", outFile);
     try (FileWriter outWriter = new FileWriter(outFile.toFile());
         Stream<String> templateLines = Files.lines(scannerClassTemplate)) {
       templateLines.forEach(
@@ -105,6 +106,7 @@ class TableBasedLexClassGenerator implements LexClassGenerator {
               throw GeneratorException.error(ErrorType.ERR_SCANNER_CLASS_GENERATE);
             }
           });
+      Out.info("Generated lexer class file at %s", outFile);
     } catch (IOException e) {
       Out.error("Error creating the scanner class file!", e);
       throw GeneratorException.error(ErrorType.ERR_SCANNER_CLASS_GENERATE);

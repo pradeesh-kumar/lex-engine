@@ -1,3 +1,10 @@
 package org.lexengine.parser.core;
 
-public interface Lexer {}
+public interface Lexer {
+
+  boolean hasNext();
+
+  Token peek();
+
+  Token next();
+}

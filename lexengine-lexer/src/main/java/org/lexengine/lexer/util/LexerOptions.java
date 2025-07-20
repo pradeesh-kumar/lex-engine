@@ -54,11 +54,16 @@ public class LexerOptions {
     encoding = Charset.defaultCharset();
     lexerSpecFile =
         new File(
-            Objects.requireNonNull(LexerOptions.class.getResource(DEFAULT_SPEC_FILE)).getFile());
+            Objects.requireNonNull(
+                    Thread.currentThread().getContextClassLoader().getResource(DEFAULT_SPEC_FILE))
+                .getFile());
     outDir = DEFAULT_OUT_DIR;
     scannerClassTemplate =
         Path.of(
-            Objects.requireNonNull(LexerOptions.class.getResource(DEFAULT_SCANNER_CLASS_FILE))
+            Objects.requireNonNull(
+                    Thread.currentThread()
+                        .getContextClassLoader()
+                        .getResource(DEFAULT_SCANNER_CLASS_FILE))
                 .getFile());
   }
 

@@ -64,7 +64,7 @@
                 <version>3.5.1</version>
                 <executions>
                     <execution>
-                        <phase>compile</phase>
+                        <phase>generate-sources</phase>
                         <goals>
                             <goal>java</goal>
                         </goals>
@@ -73,12 +73,41 @@
                 <configuration>
                     <mainClass>org.lexengine.lexer.Main</mainClass>
                     <arguments>
-                        <argument>-v</argument>
+                        <!--<argument>-v</argument>-->
+
                         <argument>-d</argument>
-                        <argument>target/generated-sources</argument>
+                        <argument>${project.basedir}/target/generated-sources/lexer/org.lexengine.parser.generated</argument>
+
+                        <argument>-sp</argument>
+                        <argument>${project.basedir}/src/main/resources/lexer-spec.spec</argument>
+
+                        <argument>-sc</argument>
+                        <argument>${project.basedir}/src/main/resources/scanner-class.template</argument>
                     </arguments>
+                    <sources>
+                        <source>target/generated-sources/lexer</source>
+                    </sources>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.3.0</version>
+                <executions>
+                    <execution>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>${project.basedir}/target/generated-sources/lexer</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
         </plugins>
     </build>
 

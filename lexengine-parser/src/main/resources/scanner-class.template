@@ -10,10 +10,13 @@ import java.nio.ByteBuffer;
 import java.util.Base64;
 import java.util.zip.GZIPInputStream;
 
+import org.lexengine.parser.core.Token;
+import org.lexengine.parser.core.Lexer;
+
 /**
  * A lexer implementation that tokenizes input from a given source path or reader.
  */
-public class ${className} {
+public class ${className} implements Lexer {
 
   /**
    * Number of states used in the finite state machine.
@@ -101,6 +104,7 @@ public class ${className} {
    *
    * @return true if there are more tokens, false otherwise
    */
+  @Override
   public boolean hasNext() {
     if (peek == null) {
       peek = next();
@@ -113,6 +117,7 @@ public class ${className} {
    *
    * @return the next token, or null if none available
    */
+  @Override
   public ${returnType} peek() {
     return this.peek;
   }
@@ -122,6 +127,7 @@ public class ${className} {
    *
    * @return the next token, or null if none available
    */
+  @Override
   public ${returnType} ${methodName}() {
     if (peek != null) {
       ${returnType} t = peek;
