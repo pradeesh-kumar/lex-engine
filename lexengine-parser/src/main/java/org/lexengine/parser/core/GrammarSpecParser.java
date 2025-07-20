@@ -13,6 +13,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import org.lexengine.commons.logging.Out;
+import org.lexengine.lexer.error.GeneratorException;
 import org.lexengine.parser.error.ErrorType;
 import org.lexengine.parser.error.ParserGeneratorException;
 
@@ -94,6 +95,10 @@ public class GrammarSpecParser {
    */
   private GrammarSpec validateGrammarSpec(GrammarSpec spec) {
     Objects.requireNonNull(spec.grammar(), "Grammar cannot be null");
+    Objects.requireNonNull(spec.grammar().productions(), "productions cannot be null");
+    if (spec.grammar().productions().isEmpty()) {
+      throw ParserGeneratorException.error(ErrorType.ERR_GRAMMAR_FILE_EMPTY_PRODUCTION);
+    }
     return spec;
   }
 
@@ -132,11 +137,12 @@ public class GrammarSpecParser {
   /** LineParser implementation for parsing production rule lines. */
   private class ProductionRuleLineParser implements LineParser {
 
-    private static final Pattern PATTERN = Pattern.compile("([^\\s]+)\\s*->\\s*(.*)");
+    private static final Pattern PATTERN_PRODUCTION = Pattern.compile("([^\\s]+)\\s*->\\s*(.*)");
+    private static final Pattern PATTERN_RULE = Pattern.compile("[A-Za-z]+|\\S");;
 
     @Override
     public void parseLine(String line) {
-      Matcher matcher = PATTERN.matcher(line);
+      Matcher matcher = PATTERN_PRODUCTION.matcher(line);
       if (!matcher.matches()) {
         Out.error("Invalid syntax line: '%s' in the syntax file at line %d!", line, lineCount);
         throw ParserGeneratorException.error(ErrorType.ERR_PRODUCTION_RULE_INVALID);
@@ -155,9 +161,10 @@ public class GrammarSpecParser {
         List<Grammar.Symbol> symbolList = new ArrayList<>();
         alternative = alternative.trim();
         // Further parse the alternative into symbols/terminals
-        String[] symbols = alternative.split("\\s+");
-        for (String s : symbols) {
-          symbolList.add(Grammar.Symbol.parse(s));
+        Matcher symbolMatcher = PATTERN_RULE.matcher(alternative);
+        while (symbolMatcher.find()) {
+          String symbol = symbolMatcher.group();
+          symbolList.add(Grammar.Symbol.parse(symbol));
         }
         rules.add(symbolList);
       }

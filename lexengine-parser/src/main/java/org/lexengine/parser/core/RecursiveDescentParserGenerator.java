@@ -16,4 +16,5 @@ public class RecursiveDescentParserGenerator extends ParserGenerator {
   public ParserDetails generate() {
     return null;
   }
+
 }

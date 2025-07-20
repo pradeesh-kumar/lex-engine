@@ -45,6 +45,14 @@ public record GrammarSpec(String parserClassName, String parserPackageName, Gram
       return this;
     }
 
+    public Builder addAllProductions(Map<Grammar.NonTerminal, List<List<Grammar.Symbol>>> productions) {
+      if (productions == null) {
+        productions = new HashMap<>();
+      }
+      this.productions.putAll(productions);
+      return this;
+    }
+
     public GrammarSpec build() {
       return new GrammarSpec(parserClassName, parserPackageName, new Grammar(productions));
     }
@@ -77,13 +85,31 @@ record Grammar(Map<NonTerminal, List<List<Symbol>>> productions) {
     public static Symbol parse(String name) {
       return name.matches("[A-Z]+") ? NonTerminal.of(name) : Terminal.of(name);
     }
+
+    @Override
+    public String toString() {
+      return name;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      Symbol that = (Symbol) o;
+      return name.equals(that.name);
+    }
+
+    @Override
+    public int hashCode() {
+      return name.hashCode();
+    }
   }
 
   static final class NonTerminal extends Symbol {
 
     private NonTerminal(String name) {
       super(name);
-      if (!name.matches("[A-Z]+")) {
+      if (!name.matches("[A-Z]+'?")) {
         throw new IllegalArgumentException(
             "Invalid nonterminal: " + name + ". NonTerminals must be strictly uppercase word");
       }
@@ -92,12 +118,28 @@ record Grammar(Map<NonTerminal, List<List<Symbol>>> productions) {
     static NonTerminal of(String name) {
       return new NonTerminal(name);
     }
+
+    @Override
+    public String toString() {
+      return super.toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      return super.equals(o);
+    }
+
+    @Override
+    public int hashCode() {
+      return super.hashCode();
+    }
+
   }
 
   static final class Terminal extends Symbol {
     private Terminal(String name) {
       super(name);
-      if (name.matches("[A-Z]+")) {
+      if (name.matches("[A-Z]+'?")) {
         throw new IllegalArgumentException(
             "Invalid terminal name " + name + " Terminal name cannot start");
       }
@@ -105,6 +147,21 @@ record Grammar(Map<NonTerminal, List<List<Symbol>>> productions) {
 
     static Terminal of(String name) {
       return new Terminal(name);
+    }
+
+    @Override
+    public String toString() {
+      return super.toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      return super.equals(o);
+    }
+
+    @Override
+    public int hashCode() {
+      return super.hashCode();
     }
   }
 }
