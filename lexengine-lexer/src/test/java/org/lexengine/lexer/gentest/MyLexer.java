@@ -1,3 +1,7 @@
+/*
+* Copyright (c) 2025 lex-engine
+* Author: Pradeesh Kumar
+*/
 package org.lexengine.lexer.gentest;
 
 import java.io.*;

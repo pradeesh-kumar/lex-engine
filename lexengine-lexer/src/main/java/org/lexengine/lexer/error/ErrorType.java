@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2024 lex-engine
- * Author: Pradeesh Kumar
- */
+* Copyright (c) 2024 lex-engine
+* Author: Pradeesh Kumar
+*/
 package org.lexengine.lexer.error;
 
 /** Enum representing different types of errors that can occur during processing. */

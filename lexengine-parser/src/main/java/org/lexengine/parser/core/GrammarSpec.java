@@ -1,4 +1,12 @@
+/*
+* Copyright (c) 2025 lex-engine
+* Author: Pradeesh Kumar
+*/
 package org.lexengine.parser.core;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public record GrammarSpec(String parserClassName, String parserPackageName, Grammar grammar) {
 
@@ -14,13 +22,9 @@ public record GrammarSpec(String parserClassName, String parserPackageName, Gram
   public static class Builder {
     private String parserClassName = DEFAULT_PARSER_CLASS_NAME;
     private String parserPackageName = DEFAULT_PARSER_PACKAGE_NAME;
-    private Grammar grammar;
+    private Map<Grammar.NonTerminal, List<List<Grammar.Symbol>>> productions;
 
-    private final GrammarSpec.Builder specBuilder;
-
-    public Builder() {
-      this.specBuilder = new GrammarSpec.Builder();
-    }
+    public Builder() {}
 
     public Builder parserClassName(String parserClassName) {
       this.parserClassName = parserClassName;
@@ -32,20 +36,75 @@ public record GrammarSpec(String parserClassName, String parserPackageName, Gram
       return this;
     }
 
-    public GrammarSpec.Builder grammar(Grammar grammar) {
-      this.specBuilder.grammar = grammar;
+    public Builder addProduction(
+        Grammar.NonTerminal nonTerminal, List<List<Grammar.Symbol>> rules) {
+      if (productions == null) {
+        productions = new HashMap<>();
+      }
+      productions.put(nonTerminal, rules);
       return this;
     }
 
     public GrammarSpec build() {
-      return specBuilder.build();
+      return new GrammarSpec(parserClassName, parserPackageName, new Grammar(productions));
     }
   }
 }
 
-record Grammar() {
+/**
+ * Grammar consists set of productions. A Symbol can be either Terminal or NonTerminal
+ *
+ * <p>Example:
+ *
+ * <p>EXPR -> EXPR + TERM | EXPR - TERM | TERM TERM -> TERM * FACTOR | TERM / FACTOR | FACTOR FACTOR
+ * -> ident | num | (EXPR)
+ *
+ * @param productions
+ */
+record Grammar(Map<NonTerminal, List<List<Symbol>>> productions) {
 
-  record Production() {}
+  abstract static sealed class Symbol permits NonTerminal, Terminal {
+    protected String name;
 
-  record Terminal() {}
+    Symbol(String name) {
+      this.name = name;
+    }
+
+    public String name() {
+      return name;
+    }
+
+    public static Symbol parse(String name) {
+      return name.matches("[A-Z]+") ? NonTerminal.of(name) : Terminal.of(name);
+    }
+  }
+
+  static final class NonTerminal extends Symbol {
+
+    private NonTerminal(String name) {
+      super(name);
+      if (!name.matches("[A-Z]+")) {
+        throw new IllegalArgumentException(
+            "Invalid nonterminal: " + name + ". NonTerminals must be strictly uppercase word");
+      }
+    }
+
+    static NonTerminal of(String name) {
+      return new NonTerminal(name);
+    }
+  }
+
+  static final class Terminal extends Symbol {
+    private Terminal(String name) {
+      super(name);
+      if (name.matches("[A-Z]+")) {
+        throw new IllegalArgumentException(
+            "Invalid terminal name " + name + " Terminal name cannot start");
+      }
+    }
+
+    static Terminal of(String name) {
+      return new Terminal(name);
+    }
+  }
 }

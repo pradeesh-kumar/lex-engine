@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2024 lex-engine
- * Author: Pradeesh Kumar
- */
+* Copyright (c) 2024 lex-engine
+* Author: Pradeesh Kumar
+*/
 package org.lexengine.lexer.core;
 
 import java.io.File;
@@ -138,8 +138,7 @@ public class SpecParser {
 
   private class RegexLineParser implements LineParser {
 
-    private static final Pattern REGEX_PATTERN = Pattern.compile("\".*\"");
-    private static final Pattern ACTION_PATTERN = Pattern.compile("[{].*[}]");
+    private static final Pattern PATTERN = Pattern.compile("\"(.*?)\"\\s*\\{(.*?)}");
 
     /**
      * Parses a regular expression line from the lexer spec file.
@@ -149,19 +148,15 @@ public class SpecParser {
      */
     @Override
     public void parseLine(String line) {
-      Matcher regexMatcher = REGEX_PATTERN.matcher(line);
-      if (!regexMatcher.find()) {
+      Matcher matcher = PATTERN.matcher(line);
+      if (!matcher.matches()) {
         Out.error("Invalid regex line: '%s' in the lexer spec file at line %d!", line, lineCount);
         throw GeneratorException.error(ErrorType.ERR_REGEX_ERR);
       }
-      String regexStr = regexMatcher.group();
-      Regex regex = Regex.fromString(regexStr.substring(1, regexStr.length() - 1));
-      Matcher actionMatcher = ACTION_PATTERN.matcher(line.substring(regexStr.length()));
-      if (!actionMatcher.find()) {
-        Out.error("Invalid action line: '%s' in the lexer spec file at line %d", line, lineCount);
-        throw GeneratorException.error(ErrorType.ERR_REGEX_ERR);
-      }
-      Action action = new Action(actionMatcher.group());
+      String regexStr = matcher.group(1);
+      Regex regex = Regex.fromString(regexStr);
+      String actionStr = matcher.group(2);
+      Action action = new Action("{" + actionStr + "}");
       specBuilder.addRegexAction(new RegexAction(regex, action));
     }
   }

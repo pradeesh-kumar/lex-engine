@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2024 lex-engine
- * Author: Pradeesh Kumar
- */
+* Copyright (c) 2024 lex-engine
+* Author: Pradeesh Kumar
+*/
 package org.lexengine.lexer.core;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

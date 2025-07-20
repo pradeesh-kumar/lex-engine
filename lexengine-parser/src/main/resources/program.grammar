@@ -4,6 +4,8 @@
 
 
 # Metadata Section
+class=MyParser
+package=org.lexengine.parser.generated
 
 ---
 # Grammar Definitions
