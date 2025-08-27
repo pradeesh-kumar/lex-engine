@@ -11,9 +11,9 @@ import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
+import org.lexengine.commons.error.ErrorType;
+import org.lexengine.commons.error.GeneratorException;
 import org.lexengine.commons.logging.Out;
-import org.lexengine.lexer.error.ErrorType;
-import org.lexengine.lexer.error.GeneratorException;
 
 /** A parser for lexer spec files that extracts regular expressions and actions from the file. */
 public class SpecParser {
@@ -60,7 +60,7 @@ public class SpecParser {
   private void switchLineParser() {
     if (dividerCount >= lineParsers.length) {
       Out.error("Invalid spec file! Unexpected divider found at line %d", lineCount);
-      throw GeneratorException.error(ErrorType.ERR_SPEC_FILE_INVALID);
+      throw GeneratorException.error(ErrorType.ERR_LEX_SPEC_FILE_INVALID);
     }
     lineParser = lineParsers[dividerCount++];
   }
@@ -87,11 +87,11 @@ public class SpecParser {
               });
       if (specBuilder.regexActionList().isEmpty()) {
         Out.error("No regex entries found in the Lexer Spec file %s", specFile);
-        throw GeneratorException.error(ErrorType.ERR_REGEX_NO_ENTRY);
+        throw GeneratorException.error(ErrorType.ERR_LEX_REGEX_NO_ENTRY);
       }
     } catch (IOException e) {
       Out.error("Error reading the Lexer Spec file %s", specFile);
-      throw GeneratorException.error(ErrorType.ERR_SPEC_FILE_READ);
+      throw GeneratorException.error(ErrorType.ERR_LEX_SPEC_FILE_READ);
     }
     return specBuilder.build();
   }
@@ -114,13 +114,13 @@ public class SpecParser {
       int eqIdx = line.indexOf('=');
       if (eqIdx == -1) {
         Out.error("Invalid property line: '%s' in the lexer spec file at line %d", line, lineCount);
-        throw GeneratorException.error(ErrorType.ERR_PROPERTY_ERR);
+        throw GeneratorException.error(ErrorType.ERR_LEX_PROPERTY_ERR);
       }
       String propName = line.substring(0, eqIdx).trim();
       String propValue = line.substring(eqIdx + 1).trim();
       if (propName.isEmpty() || propValue.isEmpty()) {
         Out.error("Invalid property line: '%s' in the lexer spec file at line %d", line, lineCount);
-        throw GeneratorException.error(ErrorType.ERR_PROPERTY_ERR);
+        throw GeneratorException.error(ErrorType.ERR_LEX_PROPERTY_ERR);
       }
       switch (propName) {
         case "class" -> specBuilder.lexClassName(propValue);
@@ -130,7 +130,7 @@ public class SpecParser {
         default -> {
           Out.error(
               "Invalid property line: '%s' in the lexer spec file at line %d!", line, lineCount);
-          throw GeneratorException.error(ErrorType.ERR_PROPERTY_ERR);
+          throw GeneratorException.error(ErrorType.ERR_LEX_PROPERTY_ERR);
         }
       }
     }
@@ -151,7 +151,7 @@ public class SpecParser {
       Matcher matcher = PATTERN.matcher(line);
       if (!matcher.matches()) {
         Out.error("Invalid regex line: '%s' in the lexer spec file at line %d!", line, lineCount);
-        throw GeneratorException.error(ErrorType.ERR_REGEX_ERR);
+        throw GeneratorException.error(ErrorType.ERR_LEX_REGEX_ERR);
       }
       String regexStr = matcher.group(1);
       Regex regex = Regex.fromString(regexStr);

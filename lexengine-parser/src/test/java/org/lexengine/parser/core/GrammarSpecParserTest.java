@@ -1,17 +1,19 @@
+/*
+* Copyright (c) 2025 lex-engine
+* Author: Pradeesh Kumar
+*/
 package org.lexengine.parser.core;
 
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.lexengine.parser.error.ParserGeneratorException;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.lexengine.commons.error.GeneratorException;
 
 public class GrammarSpecParserTest {
 
@@ -24,7 +26,8 @@ public class GrammarSpecParserTest {
 
   @Test
   void testParseValidGrammarFile() throws IOException {
-    String content = """
+    String content =
+        """
                 class=Parser
                 package=org.lexengine.parser.generated
                 ---
@@ -48,28 +51,39 @@ public class GrammarSpecParserTest {
     assertEquals(3, grammar.productions().size());
 
     Grammar.NonTerminal expr = Grammar.NonTerminal.of("EXPR");
-    List<List<Grammar.Symbol>> exprProductions = grammar.productions().get(expr);
+    List<Grammar.Alternative> exprProductions = grammar.productions().get(expr).alternatives();
     assertEquals(2, exprProductions.size());
-    assertEquals(List.of(Grammar.Symbol.parse("EXPR"), Grammar.Symbol.parse("+"), Grammar.Symbol.parse("TERM")), exprProductions.get(0));
-    assertEquals(List.of(Grammar.Symbol.parse("TERM")), exprProductions.get(1));
+    assertEquals(
+        Grammar.Alternative.create(List.of(
+            Grammar.Symbol.parse("EXPR"), Grammar.Symbol.parse("+"), Grammar.Symbol.parse("TERM"))),
+        exprProductions.get(0));
+    assertEquals(Grammar.Alternative.create(List.of(Grammar.Symbol.parse("TERM"))), exprProductions.get(1));
 
     Grammar.NonTerminal term = Grammar.NonTerminal.of("TERM");
-    List<List<Grammar.Symbol>> termProductions = grammar.productions().get(term);
+    List<Grammar.Alternative> termProductions = grammar.productions().get(term).alternatives();
     assertEquals(2, termProductions.size());
-    assertEquals(List.of(Grammar.Symbol.parse("TERM"), Grammar.Symbol.parse("*"), Grammar.Symbol.parse("FACTOR")), termProductions.get(0));
-    assertEquals(List.of(Grammar.Symbol.parse("FACTOR")), termProductions.get(1));
+    assertEquals(
+        Grammar.Alternative.create(List.of(
+            Grammar.Symbol.parse("TERM"),
+            Grammar.Symbol.parse("*"),
+            Grammar.Symbol.parse("FACTOR"))),
+        termProductions.get(0));
+    assertEquals(Grammar.Alternative.create(List.of(Grammar.Symbol.parse("FACTOR"))), termProductions.get(1));
 
     Grammar.NonTerminal factor = Grammar.NonTerminal.of("FACTOR");
-    List<List<Grammar.Symbol>> factorProductions = grammar.productions().get(factor);
+    List<Grammar.Alternative> factorProductions = grammar.productions().get(factor).alternatives();
     assertEquals(3, factorProductions.size());
-    assertEquals(List.of(Grammar.Symbol.parse("ident")), factorProductions.get(0));
-    assertEquals(List.of(Grammar.Symbol.parse("num")), factorProductions.get(1));
-    assertEquals(List.of(Grammar.Symbol.parse("("), Grammar.Symbol.parse("EXPR"), Grammar.Symbol.parse(")")), factorProductions.get(2));
+    assertEquals(Grammar.Alternative.create(List.of(Grammar.Symbol.parse("ident"))), factorProductions.get(0));
+    assertEquals(Grammar.Alternative.create(List.of(Grammar.Symbol.parse("num"))), factorProductions.get(1));
+    assertEquals(
+        Grammar.Alternative.create(List.of(Grammar.Symbol.parse("("), Grammar.Symbol.parse("EXPR"), Grammar.Symbol.parse(")"))),
+        factorProductions.get(2));
   }
 
   @Test
   void testParseInvalidGrammarFile_MissingDivider() throws IOException {
-    String content = """
+    String content =
+        """
                 class=Parser
                 package=org.lexengine.parser.generated
                 EXPR -> EXPR + TERM | TERM
@@ -79,12 +93,29 @@ public class GrammarSpecParserTest {
     Files.writeString(tempFile, content);
 
     GrammarSpecParser parser = new GrammarSpecParser(tempFile.toFile());
-    assertThrows(ParserGeneratorException.class, parser::parse);
+    assertThrows(GeneratorException.class, parser::parse);
+  }
+
+  @Test
+  void testParse_InvalidNonTerminal() throws IOException {
+    String content =
+        """
+        class=Parser
+        package=org.lexengine.parser.generated
+        ---
+        EXPR -> EXPR + TERM | TERM
+        TERM -> TERM * FACTOR | FACTOR
+        """;
+    Files.writeString(tempFile, content);
+
+    GrammarSpecParser parser = new GrammarSpecParser(tempFile.toFile());
+    assertThrows(GeneratorException.class, parser::parse);
   }
 
   @Test
   void testParseInvalidGrammarFile_InvalidProperty() throws IOException {
-    String content = """
+    String content =
+        """
                 invalidProperty=Parser
                 package=org.lexengine.parser.generated
                 ---
@@ -95,12 +126,13 @@ public class GrammarSpecParserTest {
     Files.writeString(tempFile, content);
 
     GrammarSpecParser parser = new GrammarSpecParser(tempFile.toFile());
-    assertThrows(ParserGeneratorException.class, parser::parse);
+    assertThrows(GeneratorException.class, parser::parse);
   }
 
   @Test
   void testParseInvalidGrammarFile_InvalidProductionRule() throws IOException {
-    String content = """
+    String content =
+        """
                 class=Parser
                 package=org.lexengine.parser.generated
                 ---
@@ -109,7 +141,7 @@ public class GrammarSpecParserTest {
     Files.writeString(tempFile, content);
 
     GrammarSpecParser parser = new GrammarSpecParser(tempFile.toFile());
-    assertThrows(ParserGeneratorException.class, parser::parse);
+    assertThrows(GeneratorException.class, parser::parse);
   }
 
   @Test
@@ -117,7 +149,6 @@ public class GrammarSpecParserTest {
     File nonExistentFile = new File("non_existent_file.txt");
 
     GrammarSpecParser parser = new GrammarSpecParser(nonExistentFile);
-    assertThrows(ParserGeneratorException.class, parser::parse);
+    assertThrows(GeneratorException.class, parser::parse);
   }
-
 }

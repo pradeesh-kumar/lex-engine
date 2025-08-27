@@ -9,7 +9,6 @@ public class ${className} {
 
   private final Lexer lexer;
   private final Stack<Symbol> symbolStack;
-  private Lexer.Token curToken;
 
   public ${className}(Lexer lexer) {
     this.lexer = lexer;
@@ -17,14 +16,10 @@ public class ${className} {
   }
 
   public AST parse() {
-    return ${startSymbolMethodName}();
-  }
-
-  Lexer.Token advance() {
 
   }
 
-  void accept(Lexer.Token token) {
+  void accept(Token testToken) {
 
   }
 

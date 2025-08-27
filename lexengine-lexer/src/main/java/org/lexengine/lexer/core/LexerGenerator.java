@@ -7,9 +7,9 @@ package org.lexengine.lexer.core;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.Map;
+import org.lexengine.commons.error.ErrorType;
+import org.lexengine.commons.error.GeneratorException;
 import org.lexengine.commons.logging.Out;
-import org.lexengine.lexer.error.ErrorType;
-import org.lexengine.lexer.error.GeneratorException;
 import org.lexengine.lexer.util.LexerOptions;
 
 /**
@@ -78,7 +78,7 @@ public class LexerGenerator {
       path.toFile().mkdirs();
     } else if (!path.toFile().isDirectory()) {
       Out.error("The path %s is not a directory", path.toAbsolutePath());
-      throw GeneratorException.error(ErrorType.ERR_OUT_DIR_INVALID);
+      throw GeneratorException.error(ErrorType.ERR_LEX_OUT_DIR_INVALID);
     }
   }
 }

@@ -4,7 +4,7 @@
 */
 package org.lexengine.parser.core;
 
-public class Token {
+public class TestToken implements Lexer.Token {
 
   public enum Type {
     PACKAGE,
@@ -48,37 +48,47 @@ public class Token {
   private Integer intVal;
   private Type type;
 
-  public static Token identifier(String identifier) {
-    Token token = new Token();
-    token.strVal = identifier;
-    token.type = Type.IDENTIFIER;
-    return token;
+  @Override
+  public String name() {
+    return this.type.name();
   }
 
-  public static Token integer(String integer) {
-    Token token = new Token();
-    token.type = Type.INTEGER;
-    token.intVal = Integer.parseInt(integer);
-    return token;
+  @Override
+  public String value() {
+    return this.strVal;
   }
 
-  public static Token string(String string) {
-    Token token = new Token();
-    token.type = Type.STRING;
-    token.strVal = string;
-    return token;
+  public static TestToken identifier(String identifier) {
+    TestToken testToken = new TestToken();
+    testToken.strVal = identifier;
+    testToken.type = Type.IDENTIFIER;
+    return testToken;
   }
 
-  public static Token of(Type type) {
-    Token token = new Token();
-    token.type = type;
-    return token;
+  public static TestToken integer(String integer) {
+    TestToken testToken = new TestToken();
+    testToken.type = Type.INTEGER;
+    testToken.intVal = Integer.parseInt(integer);
+    return testToken;
   }
 
-  public static Token comment() {
-    Token token = new Token();
-    token.type = Type.COMMENT;
-    return token;
+  public static TestToken string(String string) {
+    TestToken testToken = new TestToken();
+    testToken.type = Type.STRING;
+    testToken.strVal = string;
+    return testToken;
+  }
+
+  public static TestToken of(Type type) {
+    TestToken testToken = new TestToken();
+    testToken.type = type;
+    return testToken;
+  }
+
+  public static TestToken comment() {
+    TestToken testToken = new TestToken();
+    testToken.type = Type.COMMENT;
+    return testToken;
   }
 
   public String stringVal() {

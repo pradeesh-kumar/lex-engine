@@ -11,4 +11,10 @@ public interface Lexer {
   Token peek();
 
   Token next();
+
+  interface Token {
+    String name();
+
+    String value();
+  }
 }

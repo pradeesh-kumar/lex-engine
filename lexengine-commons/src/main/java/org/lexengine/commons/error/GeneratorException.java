@@ -2,14 +2,14 @@
 * Copyright (c) 2024 lex-engine
 * Author: Pradeesh Kumar
 */
-package org.lexengine.parser.error;
+package org.lexengine.commons.error;
 
 /**
  * Exception thrown when an error occurs during generation process.
  *
  * @see ErrorType for possible error types
  */
-public class ParserGeneratorException extends RuntimeException {
+public class GeneratorException extends RuntimeException {
 
   /** Type of error that caused this exception. */
   private final ErrorType errorType;
@@ -19,7 +19,7 @@ public class ParserGeneratorException extends RuntimeException {
    *
    * @param errorType type of error that occurred
    */
-  private ParserGeneratorException(ErrorType errorType) {
+  private GeneratorException(ErrorType errorType) {
     super("Error: " + errorType);
     this.errorType = errorType;
   }
@@ -30,8 +30,8 @@ public class ParserGeneratorException extends RuntimeException {
    * @param errorType type of error that occurred
    * @return a new GeneratorException instance
    */
-  public static ParserGeneratorException error(ErrorType errorType) {
-    return new ParserGeneratorException(errorType);
+  public static GeneratorException error(ErrorType errorType) {
+    return new GeneratorException(errorType);
   }
 
   /**

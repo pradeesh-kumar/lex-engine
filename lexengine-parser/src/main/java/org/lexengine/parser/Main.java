@@ -5,6 +5,7 @@
 package org.lexengine.parser;
 
 import org.lexengine.commons.logging.Out;
+import org.lexengine.parser.core.ParserGenerator;
 import org.lexengine.parser.utils.ParserOptions;
 
 public class Main {
@@ -14,8 +15,9 @@ public class Main {
       Out.printBanner();
       ParserOptions.loadDefaults();
       ParserOptions.overrideFromArgs(args);
-      /*ParserGenerator parserGenerator = ParserGenerator.Factory.create(lexer, ParserOptions.grammarFile, ParserOptions.parserType);
-      parserGenerator.generate();*/
+      ParserGenerator parserGenerator =
+          ParserGenerator.Factory.create(ParserOptions.grammarFile, ParserOptions.parserType);
+      parserGenerator.generate();
     } catch (Exception e) {
       Out.error(e.getMessage());
       System.exit(1);

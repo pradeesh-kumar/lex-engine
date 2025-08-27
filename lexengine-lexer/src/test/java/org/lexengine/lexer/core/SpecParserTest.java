@@ -10,7 +10,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import org.junit.jupiter.api.Test;
-import org.lexengine.lexer.error.GeneratorException;
+import org.lexengine.commons.error.GeneratorException;
 
 public class SpecParserTest {
 

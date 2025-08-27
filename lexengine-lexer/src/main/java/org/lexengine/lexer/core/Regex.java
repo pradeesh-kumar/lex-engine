@@ -9,9 +9,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.lexengine.commons.error.ErrorType;
+import org.lexengine.commons.error.GeneratorException;
 import org.lexengine.commons.logging.Out;
-import org.lexengine.lexer.error.ErrorType;
-import org.lexengine.lexer.error.GeneratorException;
 
 /**
  * Represents a regular expression pattern that can be iterated over to produce individual tokens.
@@ -168,12 +168,12 @@ public class Regex implements Iterable<RegexToken> {
         char next = advance();
         if (next == '\0') {
           Out.error("Invalid regex \"%s\" Contains illegal escape sequence character", val);
-          throw GeneratorException.error(ErrorType.ERR_REGEX_INVALID);
+          throw GeneratorException.error(ErrorType.ERR_LEX_REGEX_INVALID);
         }
         Character escapeLiteral = ESCAPE_CHAR_MAP.get(next);
         if (!META_CHARS.contains(next) && escapeLiteral == null) {
           Out.error("Invalid regex \"%s\" Contains invalid escape sequence character", val);
-          throw GeneratorException.error(ErrorType.ERR_REGEX_INVALID);
+          throw GeneratorException.error(ErrorType.ERR_LEX_REGEX_INVALID);
         }
         literal = escapeLiteral != null ? escapeLiteral : next;
         escaped = true;
@@ -207,7 +207,7 @@ public class Regex implements Iterable<RegexToken> {
       }
       if (literal == '\0' || literal == ']' || literal == '-') {
         Out.error("Invalid regex %s", val);
-        throw GeneratorException.error(ErrorType.ERR_REGEX_INVALID);
+        throw GeneratorException.error(ErrorType.ERR_LEX_REGEX_INVALID);
       }
       List<Range> ranges = new LinkedList<>();
       while (literal != '\0' && literal != ']') {
@@ -218,7 +218,7 @@ public class Regex implements Iterable<RegexToken> {
           Character escapedCh = ESCAPE_CHAR_MAP.get(literal);
           if (escapedCh == null) {
             Out.error("Invalid regex \"%s\"", val);
-            throw GeneratorException.error(ErrorType.ERR_REGEX_INVALID);
+            throw GeneratorException.error(ErrorType.ERR_LEX_REGEX_INVALID);
           }
           literal = escapedCh;
           ranges.add(Range.of(literal));
@@ -243,16 +243,16 @@ public class Regex implements Iterable<RegexToken> {
         Out.error(
             "Invalid char class in the regex %s Only letters and digits allowed in the range class",
             val);
-        throw GeneratorException.error(ErrorType.ERR_REGEX_INVALID);
+        throw GeneratorException.error(ErrorType.ERR_LEX_REGEX_INVALID);
       }
       if (Character.isDigit(left) ^ Character.isDigit(right)) {
         Out.error(
             "Invalid char class in the regex %s Cannot mix digit and letter in range class", val);
-        throw GeneratorException.error(ErrorType.ERR_REGEX_INVALID);
+        throw GeneratorException.error(ErrorType.ERR_LEX_REGEX_INVALID);
       }
       if (left >= right) {
         Out.error("Invalid char class in the regex %s range class values cannot be same", val);
-        throw GeneratorException.error(ErrorType.ERR_REGEX_INVALID);
+        throw GeneratorException.error(ErrorType.ERR_LEX_REGEX_INVALID);
       }
       return Range.of(left, right);
     }

@@ -4,18 +4,14 @@
 */
 package org.lexengine.lexer.core;
 
-import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import org.lexengine.commons.TemplateRenderer;
+import org.lexengine.commons.error.ErrorType;
+import org.lexengine.commons.error.GeneratorException;
 import org.lexengine.commons.logging.Out;
-import org.lexengine.lexer.error.ErrorType;
-import org.lexengine.lexer.error.GeneratorException;
 
 /**
  * An interface representing a generator for lexical classes. Implementations of this interface
@@ -35,9 +31,6 @@ public interface LexClassGenerator {
  * uses a table-based approach to represent the DFA's transition table and final states.
  */
 class TableBasedLexClassGenerator implements LexClassGenerator {
-
-  /** Regular expression pattern for matching placeholders in the template file. */
-  private static final Pattern PLACEHOLDER_PATTERN = Pattern.compile("\\$\\{(\\w+)}");
 
   private static final String COMMA = ", ";
   private static final String NEW_LINE_STR = System.lineSeparator();
@@ -72,45 +65,44 @@ class TableBasedLexClassGenerator implements LexClassGenerator {
 
   /** Generates the Lexer Class based on the provided DFA and lexical specification. */
   public void generate() {
-    Map<String, String> context = new HashMap<>();
-    context.put("className", lexSpec.lexClassName());
-    context.put("package", lexSpec.lexPackageName());
-    context.put("returnType", lexSpec.returnType());
-    context.put("methodName", lexSpec.methodName());
-    context.put("compressedTransitionTbl", getCompressedTransitionTbl());
-    context.put("finalStates", getFinalStates());
-    context.put("startState", String.valueOf(dfa.startState()));
-    context.put("statesCount", String.valueOf(dfa.statesCount()));
-    context.put("alphabetsCount", String.valueOf(dfa.alphabetSize()));
-    context.put("switchCases", getFinalStateSwitchCases());
-    context.put("alphabetIndex", getAlphabetIndex());
-
-    Path outFile = outDir.resolve(lexSpec.lexClassName() + ".java");
-    Out.info("Generating lexer class file at %s", outFile);
-    try (FileWriter outWriter = new FileWriter(outFile.toFile());
-        Stream<String> templateLines = Files.lines(scannerClassTemplate)) {
-      templateLines.forEach(
-          line -> {
-            Matcher matcher = PLACEHOLDER_PATTERN.matcher(line);
-            int lastIndex = 0;
-            try {
-              while (matcher.find()) {
-                outWriter.append(line, lastIndex, matcher.start());
-                String key = matcher.group(1);
-                outWriter.append(context.getOrDefault(key, ""));
-                lastIndex = matcher.end();
-              }
-              outWriter.append(line, lastIndex, line.length()).append(NEW_LINE_STR);
-            } catch (IOException e) {
-              Out.error("Error while generating scanner class!", e);
-              throw GeneratorException.error(ErrorType.ERR_SCANNER_CLASS_GENERATE);
-            }
-          });
+    try {
+      Path outFile = outDir.resolve(lexSpec.lexClassName() + ".java");
+      Out.info("Generating the class file at %s", outFile);
+      TemplateRenderer renderer = new TemplateRenderer(scannerClassTemplate, prepareAttributes());
+      renderer.renderToFile(outFile);
       Out.info("Generated lexer class file at %s", outFile);
     } catch (IOException e) {
-      Out.error("Error creating the scanner class file!", e);
-      throw GeneratorException.error(ErrorType.ERR_SCANNER_CLASS_GENERATE);
+      Out.error("Error creating the class file!", e);
+      throw GeneratorException.error(ErrorType.ERR_CLASS_GENERATE);
     }
+  }
+
+  /**
+   * Prepares a map of attributes required for generating the Lexer Class.
+   *
+   * <p>This method populates a map with various attributes derived from the DFA and LexSpec,
+   * including class name, package name, return type, method name, compressed transition table,
+   * final states, start state, states count, alphabets count, switch cases for final states, and
+   * alphabet index.
+   *
+   * <p>The prepared attributes are used to render a template for the Lexer Class.
+   *
+   * @return a map containing the prepared attributes
+   */
+  private Map<String, String> prepareAttributes() {
+    Map<String, String> attributes = new HashMap<>();
+    attributes.put("className", lexSpec.lexClassName());
+    attributes.put("package", lexSpec.lexPackageName());
+    attributes.put("returnType", lexSpec.returnType());
+    attributes.put("methodName", lexSpec.methodName());
+    attributes.put("compressedTransitionTbl", getCompressedTransitionTbl());
+    attributes.put("finalStates", getFinalStates());
+    attributes.put("startState", String.valueOf(dfa.startState()));
+    attributes.put("statesCount", String.valueOf(dfa.statesCount()));
+    attributes.put("alphabetsCount", String.valueOf(dfa.alphabetSize()));
+    attributes.put("switchCases", getFinalStateSwitchCases());
+    attributes.put("alphabetIndex", getAlphabetIndex());
+    return attributes;
   }
 
   /**
@@ -131,7 +123,7 @@ class TableBasedLexClassGenerator implements LexClassGenerator {
       return Base64.getEncoder().encodeToString(compressedData);
     } catch (IOException e) {
       Out.error("Error while compressing the transition table!", e);
-      throw GeneratorException.error(ErrorType.ERR_SCANNER_CLASS_GENERATE);
+      throw GeneratorException.error(ErrorType.ERR_CLASS_GENERATE);
     }
   }
 

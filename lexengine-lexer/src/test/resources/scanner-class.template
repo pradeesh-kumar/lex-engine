@@ -53,12 +53,12 @@ public class ${className} {
   private final DynamicCharBuffer buffer;
 
   /**
-   * Peeked token.
+   * Peeked testToken.
    */
   private ${returnType} peek;
 
   /**
-   * Value associated with the current token.
+   * Value associated with the current testToken.
    */
   private String value;
 
@@ -109,18 +109,18 @@ public class ${className} {
   }
 
   /**
-   * Returns the next token without consuming it.
+   * Returns the next testToken without consuming it.
    *
-   * @return the next token, or null if none available
+   * @return the next testToken, or null if none available
    */
   public ${returnType} peek() {
     return this.peek;
   }
 
   /**
-   * Returns the next token and consumes it.
+   * Returns the next testToken and consumes it.
    *
-   * @return the next token, or null if none available
+   * @return the next testToken, or null if none available
    */
   public ${returnType} ${methodName}() {
     if (peek != null) {
@@ -139,9 +139,9 @@ ${switchCases}
   }
 
   /**
-   * Returns the value associated with the current token.
+   * Returns the value associated with the current testToken.
    *
-   * @return the token value
+   * @return the testToken value
    */
   public String value() {
     return this.value;
@@ -253,7 +253,7 @@ ${alphabetIndex}
 
 
   /**
-   * Exception thrown when an error occurs during lexing.
+   * Exception thrown when an error occurs during scanning.
    */
   public static class LexerException extends RuntimeException {
     public LexerException(String message) {

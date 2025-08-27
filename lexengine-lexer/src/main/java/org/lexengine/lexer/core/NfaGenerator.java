@@ -8,9 +8,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import org.lexengine.commons.error.ErrorType;
+import org.lexengine.commons.error.GeneratorException;
 import org.lexengine.commons.logging.Out;
-import org.lexengine.lexer.error.ErrorType;
-import org.lexengine.lexer.error.GeneratorException;
 
 /**
  * Generates an NFA (Non-Deterministic Finite Automaton) from a list of regular expressions and
@@ -119,7 +119,7 @@ public final class NfaGenerator {
           case RegexToken.Type.Bar -> applyAlternate(current);
           default -> {
             Out.error("Unrecognized regular expression token %s", token.type());
-            throw GeneratorException.error(ErrorType.ERR_REGEX_INVALID);
+            throw GeneratorException.error(ErrorType.ERR_LEX_REGEX_INVALID);
           }
         }
       }
@@ -228,7 +228,7 @@ public final class NfaGenerator {
         Out.error(
             "Invalid regex %s. Contains invalid escape sequence character",
             regexAction.regex().toString());
-        throw GeneratorException.error(ErrorType.ERR_REGEX_INVALID);
+        throw GeneratorException.error(ErrorType.ERR_LEX_REGEX_INVALID);
       }
       Nfa.NfaState state = generateInternal();
       current.alternate(state);
@@ -250,7 +250,7 @@ public final class NfaGenerator {
         case '+' -> state.oneOrMore();
         default -> {
           Out.error("Unrecognized quantifier %s", token.quantifier());
-          throw GeneratorException.error(ErrorType.ERR_REGEX_ERR);
+          throw GeneratorException.error(ErrorType.ERR_LEX_REGEX_ERR);
         }
       }
     }

@@ -5,9 +5,9 @@
 package org.lexengine.lexer.core;
 
 import java.util.List;
+import org.lexengine.commons.error.ErrorType;
+import org.lexengine.commons.error.GeneratorException;
 import org.lexengine.commons.logging.Out;
-import org.lexengine.lexer.error.ErrorType;
-import org.lexengine.lexer.error.GeneratorException;
 
 /** Represents a regular expression token used for regex tokenization. */
 public class RegexToken {
@@ -76,7 +76,7 @@ public class RegexToken {
             };
     if ((token.type == Type.Bar || token.type == Type.LParen) && token.quantifier != '\0') {
       Out.error("Invalid regular expression: " + literal);
-      throw GeneratorException.error(ErrorType.ERR_REGEX_ERR);
+      throw GeneratorException.error(ErrorType.ERR_LEX_REGEX_ERR);
     }
     return token;
   }

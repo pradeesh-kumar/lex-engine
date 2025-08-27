@@ -11,6 +11,7 @@ import java.util.Base64;
 import java.util.zip.GZIPInputStream;
 
 import org.lexengine.parser.core.TestToken;
+import org.lexengine.parser.core.Lexer.Token;
 import org.lexengine.parser.core.Lexer;
 
 /**

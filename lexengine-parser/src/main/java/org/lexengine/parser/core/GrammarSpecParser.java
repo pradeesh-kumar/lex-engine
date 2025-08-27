@@ -4,18 +4,20 @@
 */
 package org.lexengine.parser.core;
 
+import org.lexengine.commons.error.ErrorType;
+import org.lexengine.commons.error.GeneratorException;
+import org.lexengine.commons.logging.Out;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
-import org.lexengine.commons.logging.Out;
-import org.lexengine.lexer.error.GeneratorException;
-import org.lexengine.parser.error.ErrorType;
-import org.lexengine.parser.error.ParserGeneratorException;
 
 /**
  * The GrammarSpecParser class is responsible for parsing a grammar specification file and returns a
@@ -55,7 +57,7 @@ public class GrammarSpecParser {
   private void switchLineParser() {
     if (dividerCount >= lineParsers.length) {
       Out.error("Invalid grammar file! Unexpected divider found at line %d", lineCount);
-      throw ParserGeneratorException.error(ErrorType.ERR_GRAMMAR_FILE_INVALID);
+      throw GeneratorException.error(ErrorType.ERR_GRAMMAR_FILE_INVALID);
     }
     lineParser = lineParsers[dividerCount++];
   }
@@ -82,7 +84,7 @@ public class GrammarSpecParser {
               });
     } catch (IOException e) {
       Out.error("Error reading the Grammar file %s", grammarFile);
-      throw ParserGeneratorException.error(ErrorType.ERR_GRAMMAR_FILE_READ);
+      throw GeneratorException.error(ErrorType.ERR_GRAMMAR_FILE_READ);
     }
     return validateGrammarSpec(specBuilder.build());
   }
@@ -94,11 +96,15 @@ public class GrammarSpecParser {
    * @return the validated GrammarSpec object
    */
   private GrammarSpec validateGrammarSpec(GrammarSpec spec) {
-    Objects.requireNonNull(spec.grammar(), "Grammar cannot be null");
-    Objects.requireNonNull(spec.grammar().productions(), "productions cannot be null");
-    if (spec.grammar().productions().isEmpty()) {
-      throw ParserGeneratorException.error(ErrorType.ERR_GRAMMAR_FILE_EMPTY_PRODUCTION);
+    Grammar grammar = spec.grammar();
+    Objects.requireNonNull(grammar, "Grammar cannot be null");
+    Objects.requireNonNull(grammar.startSymbol(), "Start symbol cannot be null");
+    Grammar.ProductionMap productions = grammar.productions();
+    Objects.requireNonNull(productions, "productions cannot be null");
+    if (productions.isEmpty()) {
+      throw GeneratorException.error(ErrorType.ERR_GRAMMAR_FILE_EMPTY_PRODUCTION);
     }
+    productions.validate();
     return spec;
   }
 
@@ -115,20 +121,20 @@ public class GrammarSpecParser {
       int eqIdx = line.indexOf('=');
       if (eqIdx == -1) {
         Out.error("Invalid property line: '%s' in the grammar file at line %d", line, lineCount);
-        throw ParserGeneratorException.error(ErrorType.ERR_PROPERTY_ERR);
+        throw GeneratorException.error(ErrorType.ERR_PARSER_PROPERTY_ERR);
       }
       String propName = line.substring(0, eqIdx).trim();
       String propValue = line.substring(eqIdx + 1).trim();
       if (propName.isEmpty() || propValue.isEmpty()) {
         Out.error("Invalid property line: '%s' in the grammar file at line %d", line, lineCount);
-        throw ParserGeneratorException.error(ErrorType.ERR_PROPERTY_ERR);
+        throw GeneratorException.error(ErrorType.ERR_PARSER_PROPERTY_ERR);
       }
       switch (propName) {
         case "class" -> specBuilder.parserClassName(propValue);
         case "package" -> specBuilder.parserPackageName(propValue);
         default -> {
           Out.error("Invalid property line: '%s' in the grammar file at line %d!", line, lineCount);
-          throw ParserGeneratorException.error(ErrorType.ERR_PROPERTY_ERR);
+          throw GeneratorException.error(ErrorType.ERR_PARSER_PROPERTY_ERR);
         }
       }
     }
@@ -138,25 +144,24 @@ public class GrammarSpecParser {
   private class ProductionRuleLineParser implements LineParser {
 
     private static final Pattern PATTERN_PRODUCTION = Pattern.compile("([^\\s]+)\\s*->\\s*(.*)");
-    private static final Pattern PATTERN_RULE = Pattern.compile("[A-Za-z]+|\\S");;
+    private static final Pattern PATTERN_RULE = Pattern.compile("[A-Za-z]+|\\S");
 
     @Override
     public void parseLine(String line) {
       Matcher matcher = PATTERN_PRODUCTION.matcher(line);
       if (!matcher.matches()) {
         Out.error("Invalid syntax line: '%s' in the syntax file at line %d!", line, lineCount);
-        throw ParserGeneratorException.error(ErrorType.ERR_PRODUCTION_RULE_INVALID);
+        throw GeneratorException.error(ErrorType.ERR_PARSER_PRODUCTION_RULE_INVALID);
       }
-      // Map<Grammar.NonTerminal, List<List<Grammar.Symbol>>> productions = new HashMap<>();
-      Grammar.NonTerminal leftHandSymbol = Grammar.NonTerminal.of(matcher.group(1));
-      List<List<Grammar.Symbol>> rule = parseRule(matcher.group(2));
-      specBuilder.addProduction(leftHandSymbol, rule);
+      Grammar.NonTerminal lhs = Grammar.NonTerminal.of(matcher.group(1));
+      List<Grammar.Alternative> rule = parseRule(matcher.group(2));
+      specBuilder.addProduction(lhs, rule);
     }
 
-    private List<List<Grammar.Symbol>> parseRule(String rule) {
+    private List<Grammar.Alternative> parseRule(String rule) {
       // Further parse the rule into alternatives and symbols/terminals
       String[] alternatives = rule.split("\\|");
-      List<List<Grammar.Symbol>> rules = new ArrayList<>();
+      List<Grammar.Alternative> rules = new ArrayList<>();
       for (String alternative : alternatives) {
         List<Grammar.Symbol> symbolList = new ArrayList<>();
         alternative = alternative.trim();
@@ -166,7 +171,7 @@ public class GrammarSpecParser {
           String symbol = symbolMatcher.group();
           symbolList.add(Grammar.Symbol.parse(symbol));
         }
-        rules.add(symbolList);
+        rules.add(Grammar.Alternative.create(symbolList));
       }
       return rules;
     }

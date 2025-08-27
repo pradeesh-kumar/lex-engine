@@ -9,7 +9,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.util.Iterator;
 import java.util.List;
 import org.junit.jupiter.api.Test;
-import org.lexengine.lexer.error.GeneratorException;
+import org.lexengine.commons.error.GeneratorException;
 
 public class RegexTest {
 

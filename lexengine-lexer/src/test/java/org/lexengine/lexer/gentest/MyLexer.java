@@ -464,7 +464,7 @@ public class MyLexer {
     return Map.copyOf(map);
   }
 
-  /** Exception thrown when an error occurs during lexing. */
+  /** Exception thrown when an error occurs during scanning. */
   public static class LexerException extends RuntimeException {
     public LexerException(String message) {
       super(message);

@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
  * happen immediately whenever you add new elements. Rather It happens implicitly when you call the
  * methods getIntersections(), getDifference() and ranges().
  */
+// TODO optimize this to an IntervalTree data structure
 public class DisjointIntSet {
 
   private static final Comparator<Range> INTERVAL_WITHIN_BOUND_COMPARATOR =
