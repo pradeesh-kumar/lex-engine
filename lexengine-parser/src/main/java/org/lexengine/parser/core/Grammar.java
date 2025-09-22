@@ -37,7 +37,6 @@ public record Grammar(ProductionMap productions, NonTerminal startSymbol) {
       Objects.requireNonNull(alternatives, "alternatives");
       return new ProductionRule(idCounter++, lhs, alternatives);
     }
-
   }
 
   public record Alternative(List<Symbol> symbols) {
@@ -54,7 +53,7 @@ public record Grammar(ProductionMap productions, NonTerminal startSymbol) {
       return symbols.isEmpty();
     }
 
-    public int  size() {
+    public int size() {
       return symbols.size();
     }
 
@@ -70,9 +69,13 @@ public record Grammar(ProductionMap productions, NonTerminal startSymbol) {
   public static class ProductionMap {
 
     private final Map<NonTerminal, ProductionRule> rules;
+    private final Map<NonTerminal, Set<Terminal>> firstSetMap;
+    private final Map<NonTerminal, Set<Terminal>> followSetMap;
 
     public ProductionMap() {
       this.rules = new HashMap<>();
+      this.firstSetMap = new HashMap<>();
+      this.followSetMap = new HashMap<>();
     }
 
     public boolean isEmpty() {
@@ -121,6 +124,125 @@ public record Grammar(ProductionMap productions, NonTerminal startSymbol) {
 
     public ProductionRule get(NonTerminal key) {
       return rules.get(key);
+    }
+
+    public Set<Terminal> getFirstSet(NonTerminal nonTerminal) {
+      if (firstSetMap.containsKey(nonTerminal)) {
+        return Set.copyOf(firstSetMap.get(nonTerminal));
+      }
+      ProductionRule rule = get(nonTerminal);
+      Set<Terminal> firstSet = new HashSet<>();
+      List<Alternative> alternatives = rule.alternatives();
+      for (Alternative alternative : alternatives) {
+        boolean foundNonEpsilon = false;
+        for (Symbol symbol : alternative.symbols) {
+          if (symbol instanceof Grammar.Terminal) {
+            firstSet.add((Grammar.Terminal) symbol);
+            foundNonEpsilon = true;
+            break;
+          }
+          Set<Terminal> firstOfA = getFirstSet((NonTerminal) symbol);
+          if (!firstOfA.contains(Terminal.EPSILON_TERMINAL)) {
+            foundNonEpsilon = true;
+            break;
+          }
+          firstOfA.remove(Terminal.EPSILON_TERMINAL);
+          firstSet.addAll(firstOfA);
+        }
+        if (!foundNonEpsilon) {
+          firstSet.add(Terminal.EPSILON_TERMINAL);
+        }
+      }
+      firstSetMap.put(nonTerminal, firstSet);
+      return Set.copyOf(firstSet);
+    }
+
+    public Set<Terminal> getFollowSet(NonTerminal nonTerminal) {
+      if (followSetMap.isEmpty()) {
+        new FollowSetCompute().compute();
+      }
+      return Set.copyOf(followSetMap.get(nonTerminal));
+    }
+
+    private class FollowSetCompute {
+
+      /** Map contains list of alternatives in which NonTerminal is present */
+      private final Map<NonTerminal, List<FlattenedRule>> nonTerminalToAlternatives;
+      /** Map contains indices of NonTerminal in Alternative */
+      private final Map<Alternative, Map<NonTerminal, List<Integer>>> alternativeToNonTerminalIndies;
+
+      public FollowSetCompute() {
+        this.nonTerminalToAlternatives = new HashMap<>(rules.size());
+        this.alternativeToNonTerminalIndies = new HashMap<>(rules.size());
+      }
+
+      private void compute() {
+        initializeIndices();
+        nonTerminals().forEach(nt -> followSetMap.put(nt, getFollowSet(nt)));
+      }
+
+      private Set<Terminal> getFollowSet(NonTerminal nonTerminal) {
+        if (followSetMap.containsKey(nonTerminal)) {
+          return Set.copyOf(followSetMap.get(nonTerminal));
+        }
+        Set<Terminal> followSet = new HashSet<>();
+        List<FlattenedRule> flattenedRules = nonTerminalToAlternatives.get(nonTerminal);
+        for (FlattenedRule flattenedRule : flattenedRules) {
+          Alternative alternative = flattenedRule.alternative;
+          List<Integer> indices = alternativeToNonTerminalIndies.get(alternative).get(nonTerminal);
+          for (int i : indices) {
+            if (i == alternative.size() - 1) {
+              followSet.addAll(getFollowSet(flattenedRule.lhs));
+              continue;
+            }
+            int nextIndex;
+            for (nextIndex = i + 1; nextIndex < alternative.size(); nextIndex++) {
+              Symbol next = alternative.get(i + 1);
+              if (next instanceof Grammar.Terminal) {
+                followSet.add((Grammar.Terminal) next);
+                break;
+              }
+              Set<Terminal> firstSetOfNext = getFirstSet((NonTerminal) next);
+              followSet.addAll(firstSetOfNext);
+              if (!firstSetOfNext.contains(Terminal.EPSILON_TERMINAL)) {
+                break;
+              }
+            }
+            if (nextIndex == alternative.size()) {
+              followSet.addAll(getFollowSet(flattenedRule.lhs));
+            }
+          }
+        }
+        followSetMap.put(nonTerminal, followSet);
+        return Set.copyOf(followSet);
+      }
+
+      private void initializeIndices() {
+        rules().forEach(rule -> {
+          for (Alternative alternative : rule.alternatives()) {
+            List<Symbol> symbols = alternative.symbols();
+            for (int i = 0; i < symbols.size(); i++) {
+              Symbol symbol = symbols.get(i);
+              if (symbol instanceof Grammar.Terminal) {
+                continue;
+              }
+              Grammar.NonTerminal nonTerminal = (Grammar.NonTerminal) symbol;
+              List<FlattenedRule> flattenedRule = nonTerminalToAlternatives.getOrDefault(nonTerminal, new ArrayList<>());
+              flattenedRule.add(FlattenedRule.create(rule.lhs, alternative));
+              nonTerminalToAlternatives.put(nonTerminal, flattenedRule);
+              Map<NonTerminal, List<Integer>> nonTerminalIndices = alternativeToNonTerminalIndies.getOrDefault(alternative, new HashMap<>());
+              nonTerminalIndices.getOrDefault(nonTerminal, new ArrayList<>()).add(i);
+              alternativeToNonTerminalIndies.put(alternative, nonTerminalIndices);
+            }
+          }
+        });
+      }
+
+      private record FlattenedRule(NonTerminal lhs, Alternative alternative) {
+        public static FlattenedRule create(NonTerminal lhs, Alternative alternative) {
+          return new FlattenedRule(lhs, alternative);
+        }
+      }
     }
   }
 
@@ -199,6 +321,9 @@ public record Grammar(ProductionMap productions, NonTerminal startSymbol) {
   }
 
   public static final class Terminal extends Symbol {
+
+    private static final Terminal EPSILON_TERMINAL = new Terminal("ε");
+
     private Terminal(String name) {
       super(name);
       if (name.matches("[A-Z]+'?")) {
@@ -208,7 +333,18 @@ public record Grammar(ProductionMap productions, NonTerminal startSymbol) {
     }
 
     public static Terminal of(String name) {
+      if (EPSILON_TERMINAL.name().equals(name)) {
+        return EPSILON_TERMINAL;
+      }
       return new Terminal(name);
+    }
+
+    public static Terminal createEpsilon() {
+      return EPSILON_TERMINAL;
+    }
+
+    public boolean isEpsilon() {
+      return EPSILON_TERMINAL.name().equals(this.name);
     }
 
     @Override

@@ -18,6 +18,7 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /** This class generates a parser class using Recursive Descent algorithm.
@@ -33,19 +34,27 @@ public class RecursiveDescentParserGenerator extends ParserGenerator {
       """;
 
   private static final String CONDITION = """
-      if (input.equals("${terminalSymbol}")) {
-        accept("${terminalSymbol}");
+      if (lookahead.equals("${terminalSymbol}")) {
         index++;
         ${conditionBody}
       }
       """;
 
-  private static final String CONDITION_FAILURE = """
-      throw new ParserException("Invalid Symbol ${terminalSymbol}");
+  private static final String CONDITION_SET = """
+      if (${conditionSet}) {
+        ${conditionBody}
+      }
+      """;
+
+  private static final String CONDITION_ELSE = """
+      else {
+        throw new ParserException("Invalid Symbol " + lookAhead());
+      }
       """;
 
   private static final String MATCHER_METHOD = """
-        void ${methodName}() {
+        ${returnType} ${methodName}() {
+          var lookAhead = lookAhead();
           ${body}
         }
       
@@ -80,6 +89,8 @@ public class RecursiveDescentParserGenerator extends ParserGenerator {
     Map<String, String> attributes = new HashMap<>();
     attributes.put("className", grammarSpec.parserClassName());
     attributes.put("package", grammarSpec.parserPackageName());
+    attributes.put("startSymbolClassName", grammar.startSymbol().className());
+    attributes.put("startSymbolMethodName", grammar.startSymbol().methodName());
     attributes.put("symbolClassDeclarations", generateSymbolClasses());
     attributes.put("symbolMatcherMethods", generateMatcherMethods());
     return attributes;
@@ -88,7 +99,9 @@ public class RecursiveDescentParserGenerator extends ParserGenerator {
   private String generateSymbolClasses() {
     return grammar.productions().nonTerminals()
         .stream()
-        .map(symbol -> TemplateRenderer.render(SYMBOL_CLASS, Map.of("className", symbol.className())))
+        .map(symbol -> TemplateRenderer.render(SYMBOL_CLASS, Map.of(
+            "className", symbol.className(),
+            "memberDeclarations", "")))
         .collect(Collectors.joining());
   }
 
@@ -102,10 +115,46 @@ public class RecursiveDescentParserGenerator extends ParserGenerator {
       Grammar.NonTerminal lhs, List<Grammar.Alternative> alternatives) {
     String body = generateMethodBody(alternatives);
     return TemplateRenderer.render(
-        MATCHER_METHOD, Map.of("methodName", lhs.methodName(), "body", body));
+        MATCHER_METHOD, Map.of(
+            "methodName", lhs.methodName(),
+            "returnType", lhs.className(),
+            "body", body
+        )
+    );
   }
 
   private String generateMethodBody(List<Grammar.Alternative> alternatives) {
-    return "";
+    if (alternatives.size() == 1) {
+      return generateConditionBody(alternatives.getFirst());
+    }
+    String allConditions = alternatives.stream().map(alternative -> {
+      if (alternative.first() instanceof Grammar.Terminal) {
+        return TemplateRenderer.render(CONDITION, Map.of(
+        "terminalSymbol", alternative.first().toString(),
+        "conditionBody", generateConditionBody(alternative))
+        );
+      } else {
+        Grammar.NonTerminal nonTerminal = (Grammar.NonTerminal) alternative.first();
+        Set<Grammar.Terminal> firstSet = grammar.productions().getFirstSet(nonTerminal);
+        String conditionSet = firstSet.stream().map(fs -> "lookAhead.equals(" + fs.name() + ")").collect(Collectors.joining("||"));
+        return TemplateRenderer.render(CONDITION_SET, Map.of(
+       "conditionSet", conditionSet,
+       "conditionBody", generateConditionBody(alternative)
+        ));
+      }
+    }).collect(Collectors.joining("else "));
+    return allConditions + CONDITION_ELSE;
+  }
+
+  private String generateConditionBody(Grammar.Alternative alternative) {
+    return alternative.symbols().stream()
+      .map(symbol -> {
+        if (symbol instanceof Grammar.Terminal terminal) {
+          return "match(\"" + terminal.name() + "\");";
+        } else {
+          return symbol.methodName() + "();";
+        }
+      })
+      .collect(Collectors.joining("\n"));
   }
 }

@@ -16,11 +16,19 @@ public class ${className} {
     this.symbolStack = new Stack<>();
   }
 
-  public AST parse() {
-    return ${startSymbolMethodName}();
+  public ParseTree parse() {
+    ${startSymbolClassName} obj =  ${startSymbolMethodName}();
+    if (lookAhead() != null) {
+     throw new ParserException("Syntax Error: Unexpected symbol " + lookahead());
+    }
+    return ParseTree.create(obj);
   }
 
   Lexer.Token advance() {
+
+  }
+
+  Lexer.Token lookAhead() {
 
   }
 
@@ -60,5 +68,5 @@ public class ${className} {
   /**
    * Symbol class declarations area
    */
-  ${symbolClassDeclarations}
+${symbolClassDeclarations}
 }

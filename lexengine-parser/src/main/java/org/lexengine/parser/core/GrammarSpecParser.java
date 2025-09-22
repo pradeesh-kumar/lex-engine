@@ -150,7 +150,7 @@ public class GrammarSpecParser {
     public void parseLine(String line) {
       Matcher matcher = PATTERN_PRODUCTION.matcher(line);
       if (!matcher.matches()) {
-        Out.error("Invalid syntax line: '%s' in the syntax file at line %d!", line, lineCount);
+        Out.error("Invalid syntax line: '%s' in the grammar file at line %d!", line, lineCount);
         throw GeneratorException.error(ErrorType.ERR_PARSER_PRODUCTION_RULE_INVALID);
       }
       Grammar.NonTerminal lhs = Grammar.NonTerminal.of(matcher.group(1));
@@ -167,9 +167,17 @@ public class GrammarSpecParser {
         alternative = alternative.trim();
         // Further parse the alternative into symbols/terminals
         Matcher symbolMatcher = PATTERN_RULE.matcher(alternative);
+        boolean foundEpsilon = false;
         while (symbolMatcher.find()) {
-          String symbol = symbolMatcher.group();
-          symbolList.add(Grammar.Symbol.parse(symbol));
+          Grammar.Symbol symbol = Grammar.Symbol.parse(symbolMatcher.group());
+          if (symbol instanceof Grammar.Terminal terminal && terminal.isEpsilon()) {
+            if (foundEpsilon) {
+              Out.error("Invalid production rule: '%s' in the grammar file at line %d! Multiple epsilons not allowed within an alternative", rule, lineCount);
+              throw GeneratorException.error(ErrorType.ERR_PARSER_MULTI_EPSILON);
+            }
+            foundEpsilon = true;
+          }
+          symbolList.add(symbol);
         }
         rules.add(Grammar.Alternative.create(symbolList));
       }

@@ -9,17 +9,30 @@ public class ${className} {
 
   private final Lexer lexer;
   private final Stack<Symbol> symbolStack;
+  private Lexer.Token curToken;
 
   public ${className}(Lexer lexer) {
     this.lexer = lexer;
     this.symbolStack = new Stack<>();
   }
 
-  public AST parse() {
+  public ParseTree parse() {
+    ${startSymbolClassName} obj =  ${startSymbolMethodName}();
+    if (lookAhead() != null) {
+     throw new ParserException("Syntax Error: Unexpected symbol " + lookahead());
+    }
+    return ParseTree.create(obj);
+  }
+
+  Lexer.Token advance() {
 
   }
 
-  void accept(Token testToken) {
+  Lexer.Token lookAhead() {
+
+  }
+
+  void accept(Lexer.Token token) {
 
   }
 
@@ -55,5 +68,5 @@ public class ${className} {
   /**
    * Symbol class declarations area
    */
-  ${symbolClassDeclarations}
+${symbolClassDeclarations}
 }

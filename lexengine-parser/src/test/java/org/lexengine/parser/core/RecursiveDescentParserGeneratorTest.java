@@ -18,7 +18,7 @@ public class RecursiveDescentParserGeneratorTest {
     URL resource = this.getClass().getClassLoader().getResource("program.grammar");
     ParserOptions.outDir = ".";
     ParserOptions.parserClassTemplate =
-        Path.of(this.getClass().getClassLoader().getResource("parser-class.template").toURI());
+        Path.of(this.getClass().getClassLoader().getResource("recursive-descent-parser-class.template").toURI());
     ParserGenerator parserGenerator =
         ParserGenerator.Factory.create(
             new File(resource.toURI()), ParserGenerator.ParserType.RECURSIVE_DESCENT);

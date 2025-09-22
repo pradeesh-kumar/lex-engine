@@ -92,7 +92,7 @@ public final class ParserHelper {
     }
 
     // Add epsilon production for the new non-terminal
-    alphaProductions.add(Grammar.Alternative.create(List.of()));
+    alphaProductions.add(Grammar.Alternative.create(List.of(Grammar.Terminal.createEpsilon())));
 
     // Update productions for the grammar
     List<Grammar.ProductionRule> updatedProductions = new ArrayList<>();
