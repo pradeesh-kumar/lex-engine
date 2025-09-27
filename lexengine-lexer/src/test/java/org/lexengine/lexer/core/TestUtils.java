@@ -4,33 +4,33 @@
 */
 package org.lexengine.lexer.core;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.util.List;
 import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class TestUtils {
 
   public static Nfa generateNfa(String specFile) {
-    LexSpec lexSpec = generateLexSpec(specFile);
-    return generateNfa(lexSpec);
+    return generateNfa(generateLexSpec(specFile));
   }
 
-  public static Nfa generateNfa(LexSpec lexSpec) {
-    List<RegexAction> regexActionList = lexSpec.regexActionList();
+  public static Nfa generateNfa(List<LexRule> lexRules) {
     DisjointIntSet languageAlphabets = new DisjointIntSet();
-    LexUtils.extractAlphabetsFromRegex(regexActionList, languageAlphabets);
+    LexUtils.extractAlphabetsFromRegex(lexRules, languageAlphabets);
     Map<Range, Integer> alphabetsIndex = LexUtils.createAlphabetsIndex(languageAlphabets.ranges());
     NfaGenerator nfaGenerator =
-        new NfaGenerator(regexActionList, languageAlphabets, alphabetsIndex);
+        new NfaGenerator(lexRules, languageAlphabets, alphabetsIndex);
     Nfa nfa = nfaGenerator.generate();
     assertNotNull(nfa);
     return nfa;
   }
 
-  public static Dfa generateDfa(LexSpec lexSpec) {
-    Nfa nfa = generateNfa(lexSpec);
+  public static Dfa generateDfa(List<LexRule> lexRules) {
+    Nfa nfa = generateNfa(lexRules);
     return new DfaGenerator(nfa).generate();
   }
 
@@ -38,9 +38,13 @@ public class TestUtils {
     return new DfaMinimizer(dfa).minimize();
   }
 
-  public static LexSpec generateLexSpec(String specFile) {
+  public static List<LexRule> generateLexSpec(String specFile) {
     File testSpecFile = new File(TestUtils.class.getClassLoader().getResource(specFile).getFile());
-    SpecParser parser = new SpecParser(testSpecFile);
-    return parser.parse();
+    try {
+      SpecParser parser = new SpecParser(new FileReader(testSpecFile));
+      return parser.parse();
+    } catch (FileNotFoundException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

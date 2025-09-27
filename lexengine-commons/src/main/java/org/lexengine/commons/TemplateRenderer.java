@@ -43,7 +43,7 @@ public class TemplateRenderer {
       this.template = readAll(templateReader);
       this.model = model;
     } catch (IOException e) {
-      throw GeneratorException.create(ErrorType.ERR_LEX_TEMPLATE_FILE_READ, e, "Error reading template file: %s", templateFile);
+      throw GeneratorException.create(ErrorType.ERR_LEX_TEMPLATE_READ, e, "Error reading template reader");
     }
   }
 

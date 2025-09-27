@@ -39,7 +39,7 @@ public enum ErrorType {
   /** Placeholder attribute missing during class generation */
   ERR_CLASS_GENERATE_ATTR_MISSING,
 
-  ERR_LEX_TEMPLATE_FILE_READ,
+  ERR_LEX_TEMPLATE_READ,
 
   ERR_PARSER_UNIMPLEMENTED,
   ERR_GRAMMAR_INVALID,

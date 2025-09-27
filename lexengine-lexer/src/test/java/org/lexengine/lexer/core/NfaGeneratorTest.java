@@ -9,11 +9,12 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 import org.junit.jupiter.api.Test;
+import org.lexengine.commons.Options;
 
 public class NfaGeneratorTest {
 
   static {
-    LexerOptions.verbose = false;
+    Options.setDefault(Options.defaultOptions().toBuilder().verbose(true).build());
   }
 
   @Test
@@ -45,7 +46,7 @@ public class NfaGeneratorTest {
     assertAction(nfa.test("/** my comment ****/"), "{ return Token.comment(); }");
   }
 
-  private void assertAction(Action action, String expected) {
+  private void assertAction(LexRule.Action action, String expected) {
     assertNotNull(action);
     assertEquals(expected, action.toString());
   }

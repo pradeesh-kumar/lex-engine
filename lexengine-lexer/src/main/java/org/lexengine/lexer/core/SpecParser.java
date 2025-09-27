@@ -43,6 +43,7 @@ public class SpecParser {
       lines
           .map(String::trim)
           .filter(Predicate.not(String::isEmpty))
+          .filter(line -> !line.stripLeading().startsWith("#"))
           .forEach(
               line -> {
                 lineCount++;

@@ -8,12 +8,12 @@ import java.nio.charset.StandardCharsets;
 public record Options(
     boolean verbose,
     Charset encoding,
-    String lexSpecFile,
     String lexerClassName,
     String lexerPackageName,
     String lexerMethodName,
     String lexerReturnType,
-    String scannerClassTemplate) {
+    String scannerClassTemplate,
+    String lexSpecFile) {
 
   private static Options defaultInstance = Options.builder().build();
 
@@ -95,8 +95,8 @@ public record Options(
     private String lexerPackageName = "org.lexengine.generator";
     private String lexerMethodName = "nextToken";
     private String lexerReturnType = "Token";
-    private String scannerClassTemplate = "scanner-class.tpl";
-    private String lexSpecFile = "lexer-spec.spec";
+    private String scannerClassTemplate = Thread.currentThread().getContextClassLoader().getResource("scanner-class.tpl").getPath();
+    private String lexSpecFile = Thread.currentThread().getContextClassLoader().getResource("lexer-spec.spec").getPath();
 
     public Builder verbose(boolean verbose) {
       this.verbose = verbose;

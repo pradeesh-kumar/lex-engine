@@ -29,7 +29,6 @@ public class DfaMinimizerTest {
 
   @Test
   void testMatchesAndNonMatches_case2() {
-    LexerOptions.verbose = true;
     Dfa minDfa =
         new DfaMinimizer(new DfaGenerator(TestUtils.generateNfa("lexer-spec.spec")).generate())
             .minimize();
@@ -59,7 +58,7 @@ public class DfaMinimizerTest {
     assertAction(minDfa.test("/** my comment ****/"), "{ return Token.comment(); }");
   }
 
-  private void assertAction(Action action, String expected) {
+  private void assertAction(LexRule.Action action, String expected) {
     assertNotNull(action);
     assertEquals(expected, action.toString());
   }

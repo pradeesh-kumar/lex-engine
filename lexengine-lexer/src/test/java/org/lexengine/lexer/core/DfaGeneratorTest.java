@@ -42,7 +42,7 @@ public class DfaGeneratorTest {
     assertAction(dfa.test("/** my comment ****/"), "{ return Token.comment(); }");
   }
 
-  private void assertAction(Action action, String expected) {
+  private void assertAction(LexRule.Action action, String expected) {
     assertNotNull(action);
     assertEquals(expected, action.toString());
   }

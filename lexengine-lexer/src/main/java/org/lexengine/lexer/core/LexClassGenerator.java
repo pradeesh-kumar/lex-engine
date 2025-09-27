@@ -60,7 +60,7 @@ class TableBasedLexClassGenerator implements LexClassGenerator {
       TemplateRenderer renderer = new TemplateRenderer(scannerClassTemplateReader, prepareAttributes());
       return new StringReader(renderer.render());
     } catch (IOException e) {
-      throw GeneratorException.create(ErrorType.ERR_SCANNER_TEMPLATE_READ, "Error reading scanner template", e);
+      throw GeneratorException.create(ErrorType.ERR_SCANNER_TEMPLATE_READ, e, "Error reading scanner template");
     }
   }
 

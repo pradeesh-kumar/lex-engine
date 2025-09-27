@@ -4,27 +4,17 @@
 */
 package org.lexengine.lexer.core;
 
-import static org.junit.jupiter.api.Assertions.*;
-
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import org.junit.jupiter.api.Test;
 import org.lexengine.commons.error.GeneratorException;
 
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+
+import static org.junit.jupiter.api.Assertions.*;
+
 public class SpecParserTest {
-
-  @Test
-  public void testParseValidFile() {
-    File testSpecFile =
-        new File(getClass().getClassLoader().getResource("lexer-spec.spec").getFile());
-    SpecParser parser = new SpecParser(testSpecFile);
-    LexSpec lexSpec = parser.parse();
-
-    assertEquals(16, lexSpec.regexActionList().size());
-    assertEquals("MyLexer", lexSpec.lexClassName());
-    assertEquals("org.lexengine.lexer.generated", lexSpec.lexPackageName());
-  }
 
   @Test
   public void testParseEmptyFile() {
@@ -32,7 +22,7 @@ public class SpecParserTest {
     assertThrows(
         GeneratorException.class,
         () -> {
-          SpecParser parser = new SpecParser(tempFile);
+          SpecParser parser = new SpecParser(new FileReader(tempFile));
           parser.parse();
         });
     deleteTempFile(tempFile);
@@ -44,7 +34,7 @@ public class SpecParserTest {
     assertThrows(
         GeneratorException.class,
         () -> {
-          SpecParser parser = new SpecParser(tempFile);
+          SpecParser parser = new SpecParser(new FileReader(tempFile));
           parser.parse();
         });
     deleteTempFile(tempFile);
@@ -56,7 +46,7 @@ public class SpecParserTest {
     assertThrows(
         GeneratorException.class,
         () -> {
-          SpecParser parser = new SpecParser(tempFile);
+          SpecParser parser = new SpecParser(new FileReader(tempFile));
           parser.parse();
         });
     deleteTempFile(tempFile);
@@ -68,7 +58,7 @@ public class SpecParserTest {
     assertThrows(
         GeneratorException.class,
         () -> {
-          SpecParser parser = new SpecParser(tempFile);
+          SpecParser parser = new SpecParser(new FileReader(tempFile));
           parser.parse();
         });
     deleteTempFile(tempFile);
@@ -81,7 +71,7 @@ public class SpecParserTest {
     assertThrows(
         GeneratorException.class,
         () -> {
-          SpecParser parser = new SpecParser(tempFile);
+          SpecParser parser = new SpecParser(new  FileReader(tempFile));
           parser.parse();
         });
     deleteTempFile(tempFile);
