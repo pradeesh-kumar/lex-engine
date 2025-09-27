@@ -4,13 +4,6 @@
 # Each section is separated by the delimiter '---'
 # Line starts with '#' are treated as comments.
 
-# Metadata Section
-class=MyLexer
-package=org.lexengine.lexer.generated;
-methodName=next
-returnType=Token
-
----
 # Regular Expression and Action Section
 # Keywords
 "int" { return Token.keyword(Token.Type.INT); }

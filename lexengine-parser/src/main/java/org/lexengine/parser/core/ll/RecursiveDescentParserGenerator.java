@@ -81,7 +81,7 @@ public class RecursiveDescentParserGenerator extends ParserGenerator {
       Out.info("Generated lexer class file at %s", outFile);
     } catch (IOException e) {
       Out.error("Error creating the class file!", e);
-      throw GeneratorException.error(ErrorType.ERR_CLASS_GENERATE);
+      throw GeneratorException.create(ErrorType.ERR_CLASS_GENERATE);
     }
   }
 

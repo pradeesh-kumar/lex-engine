@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2024 lex-engine
+* Copyright (c) 2025 lex-engine
 * Author: Pradeesh Kumar
 */
 package org.lexengine.commons.error;
@@ -31,6 +31,8 @@ public enum ErrorType {
   /** Error while compressing the transition table */
   ERR_LEX_TRANSITION_TBL_COMPRESSION,
 
+  ERR_SCANNER_TEMPLATE_READ,
+
   /** Error while generating the class file */
   ERR_CLASS_GENERATE,
 
@@ -40,6 +42,7 @@ public enum ErrorType {
   ERR_LEX_TEMPLATE_FILE_READ,
 
   ERR_PARSER_UNIMPLEMENTED,
+  ERR_GRAMMAR_INVALID,
   ERR_GRAMMAR_FILE_READ,
   ERR_GRAMMAR_FILE_INVALID,
   ERR_GRAMMAR_PRODUCTION_INVALID,
@@ -47,5 +50,5 @@ public enum ErrorType {
   ERR_PARSER_PROPERTY_ERR,
   ERR_PARSER_PRODUCTION_RULE_INVALID,
   ERR_PARSER_MULTI_EPSILON,
-  ERR_PARSER_PLACEHOLDER_NOT_FOUND,
+  ERR_PARSER_PLACEHOLDER_NOT_FOUND
 }

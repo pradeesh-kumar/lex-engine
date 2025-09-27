@@ -1,16 +1,15 @@
 /*
-* Copyright (c) 2024 lex-engine
+* Copyright (c) 2025 lex-engine
 * Author: Pradeesh Kumar
 */
 package org.lexengine.lexer.core;
 
-import java.io.File;
-import java.nio.file.Path;
+import java.io.Reader;
+import java.util.List;
 import java.util.Map;
-import org.lexengine.commons.error.ErrorType;
-import org.lexengine.commons.error.GeneratorException;
+
+import org.lexengine.commons.Options;
 import org.lexengine.commons.logging.Out;
-import org.lexengine.lexer.util.LexerOptions;
 
 /**
  * Generates a lexer based on a provided specification file.
@@ -20,23 +19,25 @@ import org.lexengine.lexer.util.LexerOptions;
  */
 public class LexerGenerator {
 
-  /** The file containing the lexer specification. */
-  private final File lexerspecFile;
-
   /** A set of disjoint ranges representing the language alphabets. */
   private final DisjointIntSet languageAlphabets;
 
-  /** The parsed lexer specification. */
-  private LexSpec lexSpec;
+  private Options options;
 
-  /**
-   * Constructs a new LexerGenerator instance with the specified lexer specification file.
-   *
-   * @param lexerspecFile the file containing the lexer specification
-   */
-  public LexerGenerator(File lexerspecFile) {
-    this.lexerspecFile = lexerspecFile;
+  private Reader specReader;
+
+  private List<LexRule> lexRules;
+
+  public LexerGenerator(Options options, Reader specReader) {
+    this.options = options;
+    this.specReader = specReader;
     this.languageAlphabets = new DisjointIntSet();
+  }
+
+  public LexerGenerator(Options options, List<LexRule> lexRules) {
+    this.options = options;
+    this.languageAlphabets = new DisjointIntSet();
+    this.lexRules = lexRules;
   }
 
   /**
@@ -54,31 +55,19 @@ public class LexerGenerator {
    *   <li>Generates the lexer class
    * </ul>
    */
-  public void generate() {
-    mkdirIfNotExists();
-    this.lexSpec = new SpecParser(lexerspecFile).parse();
-    LexUtils.extractAlphabetsFromRegex(lexSpec.regexActionList(), languageAlphabets);
+  public LexerOut generate() {
+    if (lexRules == null) {
+      this.lexRules = new SpecParser(this.specReader).parse();
+    }
+    LexUtils.extractAlphabetsFromRegex(lexRules, languageAlphabets);
     Out.debug("Language alphabets: " + languageAlphabets);
-    Map<Range, Integer> alphabetIndex =
-        LexUtils.createAlphabetsIndex(this.languageAlphabets.ranges());
-    Nfa nfa =
-        new NfaGenerator(lexSpec.regexActionList(), languageAlphabets, alphabetIndex).generate();
+    Map<Range, Integer> alphabetIndex = LexUtils.createAlphabetsIndex(this.languageAlphabets.ranges());
+    Nfa nfa = new NfaGenerator(lexRules, languageAlphabets, alphabetIndex).generate();
     Dfa dfa = new DfaGenerator(nfa).generate();
     dfa = new DfaMinimizer(dfa).minimize();
-    LexClassGenerator lexClassGenerator =
-        new TableBasedLexClassGenerator(
-            dfa, lexSpec, Path.of(LexerOptions.outDir), LexerOptions.scannerClassTemplate);
-    lexClassGenerator.generate();
+    LexClassGenerator lexClassGenerator = new TableBasedLexClassGenerator(dfa, options);
+    Reader lexerClassReader = lexClassGenerator.generate();
+    return new LexerOut(lexerClassReader, options.lexerClassName(), options.lexerPackageName());
   }
 
-  /** Creates the output directory if it does not exist. */
-  private void mkdirIfNotExists() {
-    Path path = Path.of(LexerOptions.outDir);
-    if (!path.toFile().exists()) {
-      path.toFile().mkdirs();
-    } else if (!path.toFile().isDirectory()) {
-      Out.error("The path %s is not a directory", path.toAbsolutePath());
-      throw GeneratorException.error(ErrorType.ERR_LEX_OUT_DIR_INVALID);
-    }
-  }
 }

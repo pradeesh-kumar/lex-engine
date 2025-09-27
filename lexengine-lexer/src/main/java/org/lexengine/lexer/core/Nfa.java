@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2024 lex-engine
+* Copyright (c) 2025 lex-engine
 * Author: Pradeesh Kumar
 */
 package org.lexengine.lexer.core;
@@ -25,7 +25,7 @@ public class Nfa {
   private final Map<Range, Integer> alphabetIndex;
   private final int alphabetSize;
   private final BitSet finalStates;
-  private final Map<Integer, Action> actionMap;
+  private final Map<Integer, LexRule.Action> actionMap;
   private int statesCount;
   private int startState;
   private final int epsilonAlphabetIndex;
@@ -97,7 +97,7 @@ public class Nfa {
     return finalStates.get(state);
   }
 
-  public Action action(int state) {
+  public LexRule.Action action(int state) {
     return actionMap.get(state);
   }
 
@@ -126,11 +126,11 @@ public class Nfa {
     return transitionTbl[fromState][epsilonAlphabetIndex];
   }
 
-  Action test(String input) {
+  LexRule.Action test(String input) {
     return testRecursive(input, 0, this.startState);
   }
 
-  private Action testRecursive(String input, int pos, int curState) {
+  private LexRule.Action testRecursive(String input, int pos, int curState) {
     if (finalStates.get(curState) && pos >= input.length()) {
       return actionMap.get(curState);
     }
@@ -144,7 +144,7 @@ public class Nfa {
       }
       transitions = transitionTbl[curState][alphaIndex];
       if (transitions != null) {
-        Optional<Action> action =
+        Optional<LexRule.Action> action =
             transitions.stream()
                 .mapToObj(nextState -> testRecursive(input, pos + 1, nextState))
                 .filter(Objects::nonNull)
@@ -156,7 +156,7 @@ public class Nfa {
     }
     transitions = transitionTbl[curState][epsilonAlphabetIndex];
     if (transitions != null) {
-      Optional<Action> action =
+      Optional<LexRule.Action> action =
           transitions.stream()
               .mapToObj(nextState -> testRecursive(input, pos, nextState))
               .filter(Objects::nonNull)
@@ -190,7 +190,7 @@ public class Nfa {
       return accept;
     }
 
-    void registerAction(Action action) {
+    void registerAction(LexRule.Action action) {
       actionMap.put(this.accept, action);
     }
 

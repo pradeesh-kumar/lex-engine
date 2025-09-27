@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2024 lex-engine
+* Copyright (c) 2025 lex-engine
 * Author: Pradeesh Kumar
 */
 package org.lexengine.lexer.core;
@@ -14,7 +14,7 @@ public class LexClassGeneratorTest {
     LexSpec spec = TestUtils.generateLexSpec("lexer-spec-class-gen.spec");
     Dfa dfa = TestUtils.minimizeDfa(TestUtils.generateDfa(spec));
     Path templatePath =
-        Path.of(TestUtils.class.getClassLoader().getResource("scanner-class.template").getFile());
+        Path.of(TestUtils.class.getClassLoader().getResource("scanner-class.tpl").getFile());
     Path outputPath = templatePath.getParent();
     TableBasedLexClassGenerator lcg =
         new TableBasedLexClassGenerator(dfa, spec, outputPath, templatePath);

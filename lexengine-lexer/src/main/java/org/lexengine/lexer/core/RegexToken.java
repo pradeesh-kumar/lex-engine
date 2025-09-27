@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2024 lex-engine
+* Copyright (c) 2025 lex-engine
 * Author: Pradeesh Kumar
 */
 package org.lexengine.lexer.core;
@@ -7,7 +7,6 @@ package org.lexengine.lexer.core;
 import java.util.List;
 import org.lexengine.commons.error.ErrorType;
 import org.lexengine.commons.error.GeneratorException;
-import org.lexengine.commons.logging.Out;
 
 /** Represents a regular expression token used for regex tokenization. */
 public class RegexToken {
@@ -75,8 +74,7 @@ public class RegexToken {
               default -> Type.Literal;
             };
     if ((token.type == Type.Bar || token.type == Type.LParen) && token.quantifier != '\0') {
-      Out.error("Invalid regular expression: " + literal);
-      throw GeneratorException.error(ErrorType.ERR_LEX_REGEX_ERR);
+      throw GeneratorException.create(ErrorType.ERR_LEX_REGEX_ERR, "Invalid regular expression: %s", literal);
     }
     return token;
   }

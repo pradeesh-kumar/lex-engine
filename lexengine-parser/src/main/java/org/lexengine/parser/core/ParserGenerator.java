@@ -35,11 +35,11 @@ public abstract class ParserGenerator {
       switch (type) {
         case LL1 -> {
           Out.error("LL1 not implemented!");
-          throw GeneratorException.error(ErrorType.ERR_PARSER_UNIMPLEMENTED);
+          throw GeneratorException.create(ErrorType.ERR_PARSER_UNIMPLEMENTED);
         }
         case LR1 -> {
           Out.error("LR1 not implemented!");
-          throw GeneratorException.error(ErrorType.ERR_PARSER_UNIMPLEMENTED);
+          throw GeneratorException.create(ErrorType.ERR_PARSER_UNIMPLEMENTED);
         }
         case RECURSIVE_DESCENT -> {
           return new RecursiveDescentParserGenerator(
@@ -47,7 +47,7 @@ public abstract class ParserGenerator {
         }
         default -> {
           Out.error("Unknown parser type: !");
-          throw GeneratorException.error(ErrorType.ERR_PARSER_UNIMPLEMENTED);
+          throw GeneratorException.create(ErrorType.ERR_PARSER_UNIMPLEMENTED);
         }
       }
     }

@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2024 lex-engine
+* Copyright (c) 2025 lex-engine
 * Author: Pradeesh Kumar
 */
 package org.lexengine.lexer.core;
@@ -93,8 +93,7 @@ public final class DfaGenerator {
       return;
     }
     if (summary.getCount() > 1) {
-      // Out.warn("stateSet has more than 1 final state. Highest priority is given for first
-      // declared state!");
+      Out.warn("stateSet has more than 1 final state. Highest priority is given for first declared state!");
     }
     dfa.addFinalState(dfaStateIndex, nfa.action(summary.getMin()));
   }

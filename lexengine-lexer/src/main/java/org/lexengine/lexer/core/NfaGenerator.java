@@ -1,16 +1,17 @@
 /*
-* Copyright (c) 2024 lex-engine
+* Copyright (c) 2025 lex-engine
 * Author: Pradeesh Kumar
 */
 package org.lexengine.lexer.core;
+
+import org.lexengine.commons.error.ErrorType;
+import org.lexengine.commons.error.GeneratorException;
+import org.lexengine.commons.logging.Out;
 
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import org.lexengine.commons.error.ErrorType;
-import org.lexengine.commons.error.GeneratorException;
-import org.lexengine.commons.logging.Out;
 
 /**
  * Generates an NFA (Non-Deterministic Finite Automaton) from a list of regular expressions and
@@ -18,7 +19,7 @@ import org.lexengine.commons.logging.Out;
  */
 public final class NfaGenerator {
 
-  private final List<RegexAction> regexActions;
+  private final List<LexRule> lexRules;
   private final DisjointIntSet languageAlphabets;
   private final Map<Range, Integer> alphabetIndex;
 
@@ -26,18 +27,18 @@ public final class NfaGenerator {
    * Constructs an NfaGenerator instance with the given list of regular expressions and actions,
    * language alphabets, and alphabet index.
    *
-   * @param regexActions the list of regular expressions and actions
+   * @param lexRules the list of lexical rules containing regular expressions and its metadata
    * @param languageAlphabets the set of language alphabets
    * @param alphabetIndex the mapping of ranges to indices
    */
   NfaGenerator(
-      List<RegexAction> regexActions,
+      List<LexRule> lexRules,
       DisjointIntSet languageAlphabets,
       Map<Range, Integer> alphabetIndex) {
 
-    Objects.requireNonNull(regexActions);
+    Objects.requireNonNull(lexRules, "lexRules");
     Objects.requireNonNull(languageAlphabets);
-    this.regexActions = regexActions;
+    this.lexRules = lexRules;
     this.languageAlphabets = languageAlphabets;
     this.alphabetIndex = alphabetIndex;
   }
@@ -50,8 +51,8 @@ public final class NfaGenerator {
   public Nfa generate() {
     Nfa nfa = new Nfa(languageAlphabets, alphabetIndex);
     Nfa.NfaState state =
-        regexActions.stream()
-            .map(regexAction -> new NfaStateGenerator(regexAction, nfa))
+        lexRules.stream()
+            .map(lexRule -> new NfaStateGenerator(lexRule, nfa))
             .map(NfaStateGenerator::generate)
             .reduce(Nfa.NfaState::alternateWithoutNewAccept)
             .get();
@@ -65,19 +66,19 @@ public final class NfaGenerator {
   /** Helper class for generating NFA states from regular expressions. */
   private class NfaStateGenerator {
 
-    private final RegexAction regexAction;
+    private final LexRule lexRule;
     private final Iterator<RegexToken> regexTknItr;
     private final Nfa nfa;
 
     /**
      * Constructs a new NfaStateGenerator instance.
      *
-     * @param regexAction the action associated with the regular expression
+     * @param lexRule the action associated with the regular expression
      * @param nfa the NFA object used to create new states
      */
-    private NfaStateGenerator(RegexAction regexAction, Nfa nfa) {
-      this.regexAction = regexAction;
-      this.regexTknItr = regexAction.regex().iterator();
+    private NfaStateGenerator(LexRule lexRule, Nfa nfa) {
+      this.lexRule = lexRule;
+      this.regexTknItr = lexRule.regex().iterator();
       this.nfa = nfa;
     }
 
@@ -89,9 +90,9 @@ public final class NfaGenerator {
     Nfa.NfaState generate() {
       Out.debug(
           "Generating NFA state for regex \"%s\" and action %s",
-          regexAction.regex(), regexAction.action());
+          lexRule.regex(), lexRule.action());
       Nfa.NfaState state = generateInternal();
-      state.registerAction(regexAction.action());
+      state.registerAction(lexRule.action());
       return state;
     }
 
@@ -118,8 +119,7 @@ public final class NfaGenerator {
           case RegexToken.Type.Dot -> current = applyDot(current, token);
           case RegexToken.Type.Bar -> applyAlternate(current);
           default -> {
-            Out.error("Unrecognized regular expression token %s", token.type());
-            throw GeneratorException.error(ErrorType.ERR_LEX_REGEX_INVALID);
+            throw GeneratorException.create(ErrorType.ERR_LEX_REGEX_INVALID, "unrecognized regular expression token %s",  token.type());
           }
         }
       }
@@ -225,10 +225,7 @@ public final class NfaGenerator {
      */
     private void applyAlternate(Nfa.NfaState current) {
       if (current == null) {
-        Out.error(
-            "Invalid regex %s. Contains invalid escape sequence character",
-            regexAction.regex().toString());
-        throw GeneratorException.error(ErrorType.ERR_LEX_REGEX_INVALID);
+        throw GeneratorException.create(ErrorType.ERR_LEX_REGEX_INVALID, "Invalid regex %s. Contains invalid escape sequence character", lexRule.action().toString());
       }
       Nfa.NfaState state = generateInternal();
       current.alternate(state);
@@ -249,8 +246,7 @@ public final class NfaGenerator {
         case '?' -> state.zeroOrOne();
         case '+' -> state.oneOrMore();
         default -> {
-          Out.error("Unrecognized quantifier %s", token.quantifier());
-          throw GeneratorException.error(ErrorType.ERR_LEX_REGEX_ERR);
+          throw GeneratorException.create(ErrorType.ERR_LEX_REGEX_ERR, "Unrecognized quantifier %s", token.quantifier());
         }
       }
     }

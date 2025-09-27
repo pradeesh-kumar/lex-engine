@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2024 lex-engine
+* Copyright (c) 2025 lex-engine
 * Author: Pradeesh Kumar
 */
 package org.lexengine.commons.logging;
@@ -62,7 +62,15 @@ public class Out {
   }
 
   public static void printBanner() {
-    out.write("LexEngine - Compiler Lexer and Parser Generator version: " + VERSION);
+    out.write("""
+        ██╗     ███████╗██╗  ██╗    ███████╗███╗   ██╗ ██████╗ ██╗███╗   ██╗███████╗
+        ██║     ██╔════╝╚██╗██╔╝    ██╔════╝████╗  ██║██╔════╝ ██║████╗  ██║██╔════╝
+        ██║     █████╗   ╚███╔╝     █████╗  ██╔██╗ ██║██║  ███╗██║██╔██╗ ██║█████╗ \s
+        ██║     ██╔══╝   ██╔██╗     ██╔══╝  ██║╚██╗██║██║   ██║██║██║╚██╗██║██╔══╝ \s
+        ███████╗███████╗██╔╝ ██╗    ███████╗██║ ╚████║╚██████╔╝██║██║ ╚████║███████╗
+        ╚══════╝╚══════╝╚═╝  ╚═╝    ╚══════╝╚═╝  ╚═══╝ ╚═════╝ ╚═╝╚═╝  ╚═══╝╚══════╝
+        """);
+    out.write("Version: " + VERSION);
   }
 
   enum Level {

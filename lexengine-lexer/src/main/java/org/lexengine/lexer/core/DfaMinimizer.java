@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2024 lex-engine
+* Copyright (c) 2025 lex-engine
 * Author: Pradeesh Kumar
 */
 package org.lexengine.lexer.core;
@@ -114,7 +114,7 @@ public class DfaMinimizer {
      * If there are more than 1 final actions with different states,
      * then we split them now itself to avoid them being clubbed as a single state
      */
-    Map<Action, List<Integer>> finalStatesByAction =
+    Map<LexRule.Action, List<Integer>> finalStatesByAction =
         finalStates.stream().boxed().collect(Collectors.groupingBy(dfa::action));
     List<BitSet> partitions = new LinkedList<>();
     if (!nonFinalStates.isEmpty()) {

@@ -4,16 +4,15 @@
 */
 package org.lexengine.commons;
 
-import java.io.FileWriter;
-import java.io.IOException;
-import java.nio.file.Files;
+import org.lexengine.commons.error.ErrorType;
+import org.lexengine.commons.error.GeneratorException;
+import org.lexengine.commons.logging.Out;
+
+import java.io.*;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.lexengine.commons.error.ErrorType;
-import org.lexengine.commons.error.GeneratorException;
-import org.lexengine.commons.logging.Out;
 
 /**
  * The TemplateRenderer class is responsible for rendering templates by replacing placeholders with
@@ -35,18 +34,34 @@ public class TemplateRenderer {
   /**
    * Constructs a TemplateRenderer instance by reading a template from a file.
    *
-   * @param templateFile the file containing the template
+   * @param templateReader the reader to the template
    * @param model the model containing the values to replace the placeholders
    * @throws GeneratorException if an error occurs while reading the template file
    */
-  public TemplateRenderer(Path templateFile, Map<String, String> model) {
+  public TemplateRenderer(Reader templateReader, Map<String, String> model) {
     try {
-      this.template = Files.readString(templateFile);
+      this.template = readAll(templateReader);
       this.model = model;
     } catch (IOException e) {
-      Out.error("Error reading template file: " + templateFile, e);
-      throw GeneratorException.error(ErrorType.ERR_LEX_TEMPLATE_FILE_READ);
+      throw GeneratorException.create(ErrorType.ERR_LEX_TEMPLATE_FILE_READ, e, "Error reading template file: %s", templateFile);
     }
+  }
+
+  /**
+   * Reads the entire contents of the given Reader into a string.
+   *
+   * @param reader the Reader to read from
+   * @return the contents of the Reader as a string
+   * @throws IOException if an I/O error occurs while reading from the Reader
+   */
+  private static String readAll(Reader reader) throws IOException {
+    StringWriter writer = new StringWriter();
+    char[] buffer = new char[1024];
+    int n;
+    while ((n = reader.read(buffer)) != -1) {
+      writer.write(buffer, 0, n);
+    }
+    return writer.toString();
   }
 
   /**
@@ -74,6 +89,10 @@ public class TemplateRenderer {
     }
   }
 
+  public void renderToWriter(Writer writer) throws IOException {
+    writer.write(render());
+  }
+
   /**
    * Renders the template to a string.
    *
@@ -98,8 +117,7 @@ public class TemplateRenderer {
       String placeholder = matcher.group(1);
       String attrVal = model.get(placeholder);
       if (attrVal == null) {
-        Out.error("Failed to render template! Attribute %s not found!", placeholder);
-        throw GeneratorException.error(ErrorType.ERR_CLASS_GENERATE_ATTR_MISSING);
+        throw GeneratorException.create(ErrorType.ERR_CLASS_GENERATE_ATTR_MISSING, "Failed to render template! Attribute %s not found!", placeholder);
       }
       matcher.appendReplacement(result, attrVal);
     }

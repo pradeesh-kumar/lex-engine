@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2024 lex-engine
+* Copyright (c) 2025 lex-engine
 * Author: Pradeesh Kumar
 */
 package org.lexengine.lexer.core;
@@ -23,13 +23,13 @@ public final class LexUtils {
    * Extracts alphabets from a list of regular expressions and adds them to a disjoint set of
    * language alphabets.
    *
-   * @param regexActions a list of regular expression actions
+   * @param lexRules a list of lexer rules containing regular expression and its metadata
    * @param languageAlphabets a disjoint set of language alphabets
    */
   static void extractAlphabetsFromRegex(
-      List<RegexAction> regexActions, DisjointIntSet languageAlphabets) {
-    regexActions.stream()
-        .map(RegexAction::regex)
+      List<LexRule> lexRules, DisjointIntSet languageAlphabets) {
+    lexRules.stream()
+        .map(LexRule::regex)
         .map(Regex::extractAlphabets)
         .flatMap(List::stream)
         .forEach(languageAlphabets::add);

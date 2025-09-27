@@ -1,17 +1,18 @@
 /*
-* Copyright (c) 2024 lex-engine
+* Copyright (c) 2025 lex-engine
 * Author: Pradeesh Kumar
 */
 package org.lexengine.lexer.core;
 
-import java.io.IOException;
-import java.nio.file.Path;
-import java.util.*;
-import java.util.stream.Collectors;
+import org.lexengine.commons.Options;
 import org.lexengine.commons.TemplateRenderer;
 import org.lexengine.commons.error.ErrorType;
 import org.lexengine.commons.error.GeneratorException;
 import org.lexengine.commons.logging.Out;
+
+import java.io.*;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * An interface representing a generator for lexical classes. Implementations of this interface
@@ -21,7 +22,7 @@ import org.lexengine.commons.logging.Out;
 public interface LexClassGenerator {
 
   /** Generates the lexical class according to the implementation's logic. */
-  void generate();
+  Reader generate();
 }
 
 /**
@@ -38,42 +39,28 @@ class TableBasedLexClassGenerator implements LexClassGenerator {
   /** The DFA used to generate the lexical class. */
   private final Dfa dfa;
 
-  /** The lexical specification for the generated class. */
-  private final LexSpec lexSpec;
-
-  /** Output directory where the generated class will be written. */
-  private final Path outDir;
-
-  /** Template file for the scanner class. */
-  private final Path scannerClassTemplate;
+  /** Configuration Options */
+  private final Options options;
 
   /**
    * Constructs a new TableBasedLexClassGenerator instance.
    *
    * @param dfa DFA used to generate the lexical class
-   * @param lexSpec lexical specification for the generated class
-   * @param outDir output directory where the generated class will be written
-   * @param scannerClassTemplate template file for the scanner class
    */
   public TableBasedLexClassGenerator(
-      Dfa dfa, LexSpec lexSpec, Path outDir, Path scannerClassTemplate) {
+      Dfa dfa, Options options) {
     this.dfa = dfa;
-    this.lexSpec = lexSpec;
-    this.outDir = outDir;
-    this.scannerClassTemplate = scannerClassTemplate;
+    this.options = options;
   }
 
   /** Generates the Lexer Class based on the provided DFA and lexical specification. */
-  public void generate() {
-    try {
-      Path outFile = outDir.resolve(lexSpec.lexClassName() + ".java");
-      Out.info("Generating the class file at %s", outFile);
-      TemplateRenderer renderer = new TemplateRenderer(scannerClassTemplate, prepareAttributes());
-      renderer.renderToFile(outFile);
-      Out.info("Generated lexer class file at %s", outFile);
+  public Reader generate() {
+    try (Reader scannerClassTemplateReader = new FileReader(options.scannerClassTemplate())) {
+      Out.info("Rendering the Lexer class");
+      TemplateRenderer renderer = new TemplateRenderer(scannerClassTemplateReader, prepareAttributes());
+      return new StringReader(renderer.render());
     } catch (IOException e) {
-      Out.error("Error creating the class file!", e);
-      throw GeneratorException.error(ErrorType.ERR_CLASS_GENERATE);
+      throw GeneratorException.create(ErrorType.ERR_SCANNER_TEMPLATE_READ, "Error reading scanner template", e);
     }
   }
 
@@ -91,10 +78,10 @@ class TableBasedLexClassGenerator implements LexClassGenerator {
    */
   private Map<String, String> prepareAttributes() {
     Map<String, String> attributes = new HashMap<>();
-    attributes.put("className", lexSpec.lexClassName());
-    attributes.put("package", lexSpec.lexPackageName());
-    attributes.put("returnType", lexSpec.returnType());
-    attributes.put("methodName", lexSpec.methodName());
+    attributes.put("className", options.lexerClassName());
+    attributes.put("package", options.lexerPackageName());
+    attributes.put("returnType", options.lexerReturnType());
+    attributes.put("methodName", options.lexerMethodName());
     attributes.put("compressedTransitionTbl", getCompressedTransitionTbl());
     attributes.put("finalStates", getFinalStates());
     attributes.put("startState", String.valueOf(dfa.startState()));
@@ -122,8 +109,7 @@ class TableBasedLexClassGenerator implements LexClassGenerator {
       byte[] compressedData = LexUtils.compress(serializedData);
       return Base64.getEncoder().encodeToString(compressedData);
     } catch (IOException e) {
-      Out.error("Error while compressing the transition table!", e);
-      throw GeneratorException.error(ErrorType.ERR_CLASS_GENERATE);
+      throw GeneratorException.create(ErrorType.ERR_CLASS_GENERATE, "Error while compressing the transition table!", e);
     }
   }
 
@@ -150,9 +136,9 @@ class TableBasedLexClassGenerator implements LexClassGenerator {
    * @return a string containing the switch cases for final states
    */
   private String getFinalStateSwitchCases() {
-    Map<Integer, Action> actions = dfa.actions();
+    Map<Integer, LexRule.Action> actions = dfa.actions();
     String caseFormat = "        case %s -> %s";
-    Set<Map.Entry<Action, List<Map.Entry<Integer, Action>>>> reverse =
+    Set<Map.Entry<LexRule.Action, List<Map.Entry<Integer, LexRule.Action>>>> reverse =
         actions.entrySet().stream().collect(Collectors.groupingBy(Map.Entry::getValue)).entrySet();
 
     return reverse.stream()

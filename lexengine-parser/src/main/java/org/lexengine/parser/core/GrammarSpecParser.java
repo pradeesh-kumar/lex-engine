@@ -57,7 +57,7 @@ public class GrammarSpecParser {
   private void switchLineParser() {
     if (dividerCount >= lineParsers.length) {
       Out.error("Invalid grammar file! Unexpected divider found at line %d", lineCount);
-      throw GeneratorException.error(ErrorType.ERR_GRAMMAR_FILE_INVALID);
+      throw GeneratorException.create(ErrorType.ERR_GRAMMAR_FILE_INVALID);
     }
     lineParser = lineParsers[dividerCount++];
   }
@@ -84,7 +84,7 @@ public class GrammarSpecParser {
               });
     } catch (IOException e) {
       Out.error("Error reading the Grammar file %s", grammarFile);
-      throw GeneratorException.error(ErrorType.ERR_GRAMMAR_FILE_READ);
+      throw GeneratorException.create(ErrorType.ERR_GRAMMAR_FILE_READ);
     }
     return validateGrammarSpec(specBuilder.build());
   }
@@ -102,7 +102,7 @@ public class GrammarSpecParser {
     Grammar.ProductionMap productions = grammar.productions();
     Objects.requireNonNull(productions, "productions cannot be null");
     if (productions.isEmpty()) {
-      throw GeneratorException.error(ErrorType.ERR_GRAMMAR_FILE_EMPTY_PRODUCTION);
+      throw GeneratorException.create(ErrorType.ERR_GRAMMAR_FILE_EMPTY_PRODUCTION);
     }
     productions.validate();
     return spec;
@@ -121,20 +121,20 @@ public class GrammarSpecParser {
       int eqIdx = line.indexOf('=');
       if (eqIdx == -1) {
         Out.error("Invalid property line: '%s' in the grammar file at line %d", line, lineCount);
-        throw GeneratorException.error(ErrorType.ERR_PARSER_PROPERTY_ERR);
+        throw GeneratorException.create(ErrorType.ERR_PARSER_PROPERTY_ERR);
       }
       String propName = line.substring(0, eqIdx).trim();
       String propValue = line.substring(eqIdx + 1).trim();
       if (propName.isEmpty() || propValue.isEmpty()) {
         Out.error("Invalid property line: '%s' in the grammar file at line %d", line, lineCount);
-        throw GeneratorException.error(ErrorType.ERR_PARSER_PROPERTY_ERR);
+        throw GeneratorException.create(ErrorType.ERR_PARSER_PROPERTY_ERR);
       }
       switch (propName) {
         case "class" -> specBuilder.parserClassName(propValue);
         case "package" -> specBuilder.parserPackageName(propValue);
         default -> {
           Out.error("Invalid property line: '%s' in the grammar file at line %d!", line, lineCount);
-          throw GeneratorException.error(ErrorType.ERR_PARSER_PROPERTY_ERR);
+          throw GeneratorException.create(ErrorType.ERR_PARSER_PROPERTY_ERR);
         }
       }
     }
@@ -151,7 +151,7 @@ public class GrammarSpecParser {
       Matcher matcher = PATTERN_PRODUCTION.matcher(line);
       if (!matcher.matches()) {
         Out.error("Invalid syntax line: '%s' in the grammar file at line %d!", line, lineCount);
-        throw GeneratorException.error(ErrorType.ERR_PARSER_PRODUCTION_RULE_INVALID);
+        throw GeneratorException.create(ErrorType.ERR_PARSER_PRODUCTION_RULE_INVALID);
       }
       Grammar.NonTerminal lhs = Grammar.NonTerminal.of(matcher.group(1));
       List<Grammar.Alternative> rule = parseRule(matcher.group(2));
@@ -173,7 +173,7 @@ public class GrammarSpecParser {
           if (symbol instanceof Grammar.Terminal terminal && terminal.isEpsilon()) {
             if (foundEpsilon) {
               Out.error("Invalid production rule: '%s' in the grammar file at line %d! Multiple epsilons not allowed within an alternative", rule, lineCount);
-              throw GeneratorException.error(ErrorType.ERR_PARSER_MULTI_EPSILON);
+              throw GeneratorException.create(ErrorType.ERR_PARSER_MULTI_EPSILON);
             }
             foundEpsilon = true;
           }

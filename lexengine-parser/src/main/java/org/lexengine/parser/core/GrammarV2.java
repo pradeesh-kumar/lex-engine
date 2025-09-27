@@ -8,25 +8,30 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-/**
- * Grammar consists set of productions. A Symbol can be either Terminal or NonTerminal
- *
- * <p>Example:
- *
- * <p>EXPR -> EXPR + TERM | EXPR - TERM | TERM TERM -> TERM * FACTOR | TERM / FACTOR | FACTOR FACTOR
- * -> ident | num | (EXPR)
- *
- * @param productions
- */
-public record Grammar(ProductionMap productions, NonTerminal startSymbol) {
+import static org.lexengine.commons.Validations.requireNonBlank;
 
-  public Grammar {
-    Objects.requireNonNull(startSymbol, "Start symbol cannot be null");
-    Objects.requireNonNull(productions, "productions cannot be null");
-    if (productions.isEmpty()) {
-      throw GeneratorException.create(ErrorType.ERR_GRAMMAR_FILE_EMPTY_PRODUCTION);
+public record GrammarV2(Metadata metadata, TokenDefinition tokenDefinition, GrammarDefinition grammarDefinition) {
+
+  public GrammarV2 {
+    Objects.requireNonNull(metadata, "Metadata cannot be null");
+    Objects.requireNonNull(tokenDefinition, "Token Definitions cannot be null");
+    Objects.requireNonNull(grammarDefinition, "Grammar Definitions cannot be null");
+  }
+
+  public record Metadata(String compilableUnit, int bodyIndex) {
+    public Metadata {
+      requireNonBlank(compilableUnit, "Compilation Unit");
+      if  (bodyIndex < 0) {
+        throw new IllegalArgumentException("body index cannot be negative");
+      }
     }
-    productions.validate();
+  }
+
+  public record TokenDefinition(List<TokenRule> tokenRules) {
+    public record TokenRule(String group, String name, String regex) {}
+  }
+
+  public record GrammarDefinition(ProductionMap productions, NonTerminal startSymbol) {
   }
 
   public record ProductionRule(int index, NonTerminal lhs, List<Alternative> alternatives) {
@@ -104,8 +109,8 @@ public record Grammar(ProductionMap productions, NonTerminal startSymbol) {
           .map(ProductionRule::alternatives)
           .flatMap(List::stream)
           .flatMap(a -> a.symbols.stream())
-          .filter(symbol -> symbol instanceof Grammar.NonTerminal)
-          .map(symbol -> (Grammar.NonTerminal) symbol)
+          .filter(symbol -> symbol instanceof NonTerminal)
+          .map(symbol -> (NonTerminal) symbol)
           .filter(Predicate.not(keys::contains))
           .collect(Collectors.toSet());
       if (!invalidNonTerminals.isEmpty()) {
@@ -136,8 +141,8 @@ public record Grammar(ProductionMap productions, NonTerminal startSymbol) {
       for (Alternative alternative : alternatives) {
         boolean foundNonEpsilon = false;
         for (Symbol symbol : alternative.symbols) {
-          if (symbol instanceof Grammar.Terminal) {
-            firstSet.add((Grammar.Terminal) symbol);
+          if (symbol instanceof Terminal) {
+            firstSet.add((Terminal) symbol);
             foundNonEpsilon = true;
             break;
           }
@@ -186,8 +191,8 @@ public record Grammar(ProductionMap productions, NonTerminal startSymbol) {
           return Set.copyOf(followSetMap.get(nonTerminal));
         }
         Set<Terminal> followSet = new HashSet<>();
-        List<FlattenedRule> flattenedRules = nonTerminalToAlternatives.get(nonTerminal);
-        for (FlattenedRule flattenedRule : flattenedRules) {
+        List<FollowSetCompute.FlattenedRule> flattenedRules = nonTerminalToAlternatives.get(nonTerminal);
+        for (FollowSetCompute.FlattenedRule flattenedRule : flattenedRules) {
           Alternative alternative = flattenedRule.alternative;
           List<Integer> indices = alternativeToNonTerminalIndies.get(alternative).get(nonTerminal);
           for (int i : indices) {
@@ -198,8 +203,8 @@ public record Grammar(ProductionMap productions, NonTerminal startSymbol) {
             int nextIndex;
             for (nextIndex = i + 1; nextIndex < alternative.size(); nextIndex++) {
               Symbol next = alternative.get(i + 1);
-              if (next instanceof Grammar.Terminal) {
-                followSet.add((Grammar.Terminal) next);
+              if (next instanceof Terminal) {
+                followSet.add((Terminal) next);
                 break;
               }
               Set<Terminal> firstSetOfNext = getFirstSet((NonTerminal) next);
@@ -223,12 +228,12 @@ public record Grammar(ProductionMap productions, NonTerminal startSymbol) {
             List<Symbol> symbols = alternative.symbols();
             for (int i = 0; i < symbols.size(); i++) {
               Symbol symbol = symbols.get(i);
-              if (symbol instanceof Grammar.Terminal) {
+              if (symbol instanceof Terminal) {
                 continue;
               }
-              Grammar.NonTerminal nonTerminal = (Grammar.NonTerminal) symbol;
-              List<FlattenedRule> flattenedRule = nonTerminalToAlternatives.getOrDefault(nonTerminal, new ArrayList<>());
-              flattenedRule.add(FlattenedRule.create(rule.lhs, alternative));
+              NonTerminal nonTerminal = (NonTerminal) symbol;
+              List<ProductionMap.FollowSetCompute.FlattenedRule> flattenedRule = nonTerminalToAlternatives.getOrDefault(nonTerminal, new ArrayList<>());
+              flattenedRule.add(ProductionMap.FollowSetCompute.FlattenedRule.create(rule.lhs, alternative));
               nonTerminalToAlternatives.put(nonTerminal, flattenedRule);
               Map<NonTerminal, List<Integer>> nonTerminalIndices = alternativeToNonTerminalIndies.getOrDefault(alternative, new HashMap<>());
               nonTerminalIndices.getOrDefault(nonTerminal, new ArrayList<>()).add(i);
@@ -269,6 +274,10 @@ public record Grammar(ProductionMap productions, NonTerminal startSymbol) {
 
     public static Symbol parse(String name) {
       return name.matches("[A-Z]+") ? NonTerminal.of(name) : Terminal.of(name);
+    }
+
+    public static Symbol literalTerminal(String literal) {
+      return Terminal.of(literal);
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2024 lex-engine
+* Copyright (c) 2025 lex-engine
 * Author: Pradeesh Kumar
 */
 package org.lexengine.lexer.core;
@@ -32,7 +32,7 @@ public class Dfa {
   private int statesCount;
 
   private final int alphabetSize;
-  private final Map<Integer, Action> actionMap;
+  private final Map<Integer, LexRule.Action> actionMap;
   private final BitSet finalStates;
   private final DisjointIntSet languageAlphabets;
   private final Map<Range, Integer> alphabetIndex;
@@ -87,7 +87,7 @@ public class Dfa {
    *
    * @return action map
    */
-  public Map<Integer, Action> actions() {
+  public Map<Integer, LexRule.Action> actions() {
     return actionMap;
   }
 
@@ -121,7 +121,7 @@ public class Dfa {
    * @param state index of the state
    * @return associated action, or null if none
    */
-  public Action action(int state) {
+  public LexRule.Action action(int state) {
     return actionMap.get(state);
   }
 
@@ -178,7 +178,7 @@ public class Dfa {
    * @param state index of the state
    * @param action associated action
    */
-  public void addFinalState(int state, Action action) {
+  public void addFinalState(int state, LexRule.Action action) {
     this.finalStates.set(state);
     this.actionMap.put(state, action);
   }
@@ -237,7 +237,7 @@ public class Dfa {
    * @param input string to test
    * @return associated action if accepted, or null if rejected
    */
-  public Action test(String input) {
+  public LexRule.Action test(String input) {
     int currentState = this.startState;
     for (int i = 0; i < input.length(); i++) {
       Range range = languageAlphabets.getRange(input.charAt(i));
