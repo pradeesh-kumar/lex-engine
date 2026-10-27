@@ -1,0 +1,7 @@
+# Canonical LR(1): merging states by LR(0) core would introduce reduce/reduce conflicts.
+class=CanonicalParser
+package=org.lexengine.examples.generated
+---
+S -> a A d | b A e | a B e | b B d
+A -> c
+B -> c

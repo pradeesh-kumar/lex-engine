@@ -285,7 +285,7 @@ public class Nfa {
 
       addTransition(newStart, epsilonAlphabetIndex, this.start);
       addTransition(this.accept, epsilonAlphabetIndex, newAccept);
-      addTransition(newStart, epsilonAlphabetIndex, newAccept);
+      addTransition(this.accept, epsilonAlphabetIndex, this.start);
 
       finalStates.set(newAccept);
       this.start = newStart;

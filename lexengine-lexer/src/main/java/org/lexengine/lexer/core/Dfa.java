@@ -92,7 +92,7 @@ public class Dfa {
   }
 
   /**
-   * Returns a copy of the transition table, excluding the phi-state.
+   * Returns a copy of the transition table, including the reserved phi-state at index zero.
    *
    * <p>The returned table maps states to next states based on input alphabets. Each row represents
    * a state, and each column represents an alphabet. The cell at row `i` and column `j` contains
@@ -101,8 +101,10 @@ public class Dfa {
    * @return a copy of the transition table
    */
   public int[][] transitionTbl() {
-    int[][] result = new int[statesCount - 1][alphabetSize];
-    System.arraycopy(this.transitionTbl, 0, result, 0, statesCount - 1);
+    int[][] result = new int[statesCount][alphabetSize];
+    for (int state = 0; state < statesCount; state++) {
+      System.arraycopy(this.transitionTbl[state], 0, result[state], 0, alphabetSize);
+    }
     return result;
   }
 
@@ -225,7 +227,8 @@ public class Dfa {
     }
     // New capacity is the minimum of currentSize + (currentSize * 1.5) or currentSize +
     // MAX_STATE_BUFFER
-    int newCapacity = transitionTbl.length + Math.min(transitionTbl.length >> 1, MAX_STATE_BUFFER);
+    int newCapacity =
+        transitionTbl.length + Math.max(1, Math.min(transitionTbl.length >> 1, MAX_STATE_BUFFER));
     int[][] newTransitionTbl = new int[newCapacity][this.alphabetSize];
     System.arraycopy(transitionTbl, 0, newTransitionTbl, 0, transitionTbl.length);
     transitionTbl = newTransitionTbl;

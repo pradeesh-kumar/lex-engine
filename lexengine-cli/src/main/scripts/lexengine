@@ -1,0 +1,31 @@
+#!/bin/sh
+set -eu
+lex_engine_bin=$(CDPATH= cd -P "$(dirname "$0")" && pwd)
+if [ -n "${JAVA_HOME:-}" ]; then
+  lex_engine_java="$JAVA_HOME/bin/java"
+else
+  lex_engine_java=java
+fi
+
+lex_engine_supported_java() {
+  lex_engine_major=$("$1" -XshowSettings:properties -version 2>&1 |
+    sed -n 's/^[[:space:]]*java.specification.version = //p')
+  case "$lex_engine_major" in
+    ''|*[!0-9]*) return 1 ;;
+    *) [ "$lex_engine_major" -ge 21 ] ;;
+  esac
+}
+
+if ! lex_engine_supported_java "$lex_engine_java"; then
+  if [ -x /usr/libexec/java_home ]; then
+    lex_engine_java_home=$(/usr/libexec/java_home -v '21+' 2>/dev/null || true)
+    if [ -n "$lex_engine_java_home" ]; then
+      lex_engine_java="$lex_engine_java_home/bin/java"
+    fi
+  fi
+  if ! lex_engine_supported_java "$lex_engine_java"; then
+    printf '%s\n' 'Lex-Engine requires Java 21 or newer. Set JAVA_HOME to a compatible Java installation.' >&2
+    exit 1
+  fi
+fi
+exec "$lex_engine_java" -jar "$lex_engine_bin/lex-engine.jar" "$@"

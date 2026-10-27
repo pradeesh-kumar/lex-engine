@@ -4,20 +4,18 @@
 */
 package org.lexengine.parser.core;
 
-import org.lexengine.commons.error.ErrorType;
-import org.lexengine.commons.error.GeneratorException;
-import org.lexengine.commons.logging.Out;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
+import org.lexengine.commons.error.ErrorType;
+import org.lexengine.commons.error.GeneratorException;
+import org.lexengine.commons.logging.Out;
 
 /**
  * The GrammarSpecParser class is responsible for parsing a grammar specification file and returns a
@@ -46,7 +44,7 @@ public class GrammarSpecParser {
    *
    * @param grammarFile the grammar file to be parsed
    */
-  GrammarSpecParser(File grammarFile) {
+  public GrammarSpecParser(File grammarFile) {
     this.grammarFile = grammarFile;
     this.specBuilder = GrammarSpec.builder();
     this.lineParsers = new LineParser[] {new MetadataLineParser(), new ProductionRuleLineParser()};
@@ -57,7 +55,8 @@ public class GrammarSpecParser {
   private void switchLineParser() {
     if (dividerCount >= lineParsers.length) {
       Out.error("Invalid grammar file! Unexpected divider found at line %d", lineCount);
-      throw GeneratorException.create(ErrorType.ERR_GRAMMAR_FILE_INVALID);
+      throw GeneratorException.create(
+          ErrorType.ERR_GRAMMAR_FILE_INVALID, "Unexpected section separator at line %d", lineCount);
     }
     lineParser = lineParsers[dividerCount++];
   }
@@ -69,22 +68,31 @@ public class GrammarSpecParser {
    */
   public GrammarSpec parse() {
     Out.debug("Parsing the Grammar file %s", grammarFile);
+    try {
+      String source = Files.readString(grammarFile.toPath());
+      if (grammarFile.getName().endsWith(".lg")
+          || source.lines().filter(line -> line.trim().equals("---")).count() == 2) {
+        return new GrammarV2Parser(new java.io.StringReader(source)).parse().toGrammarSpec();
+      }
+    } catch (IOException e) {
+      throw GeneratorException.create(
+          ErrorType.ERR_GRAMMAR_FILE_READ, e, "Cannot read grammar %s", grammarFile);
+    }
     try (Stream<String> lines = Files.lines(grammarFile.toPath())) {
       lines
           .map(String::trim)
-          .filter(Predicate.not(String::isEmpty))
           .forEach(
               line -> {
                 lineCount++;
                 if (DIVIDER.equals(line)) {
                   switchLineParser();
-                } else if (COMMENT != line.charAt(0)) {
+                } else if (!line.isEmpty() && COMMENT != line.charAt(0)) {
                   this.lineParser.parseLine(line);
                 }
               });
     } catch (IOException e) {
-      Out.error("Error reading the Grammar file %s", grammarFile);
-      throw GeneratorException.create(ErrorType.ERR_GRAMMAR_FILE_READ);
+      throw GeneratorException.create(
+          ErrorType.ERR_GRAMMAR_FILE_READ, "Error reading the Grammar file %s", grammarFile);
     }
     return validateGrammarSpec(specBuilder.build());
   }
@@ -102,7 +110,8 @@ public class GrammarSpecParser {
     Grammar.ProductionMap productions = grammar.productions();
     Objects.requireNonNull(productions, "productions cannot be null");
     if (productions.isEmpty()) {
-      throw GeneratorException.create(ErrorType.ERR_GRAMMAR_FILE_EMPTY_PRODUCTION);
+      throw GeneratorException.create(
+          ErrorType.ERR_GRAMMAR_FILE_EMPTY_PRODUCTION, "Productions cannot be empty");
     }
     productions.validate();
     return spec;
@@ -120,21 +129,30 @@ public class GrammarSpecParser {
     public void parseLine(String line) {
       int eqIdx = line.indexOf('=');
       if (eqIdx == -1) {
-        Out.error("Invalid property line: '%s' in the grammar file at line %d", line, lineCount);
-        throw GeneratorException.create(ErrorType.ERR_PARSER_PROPERTY_ERR);
+        throw GeneratorException.create(
+            ErrorType.ERR_PARSER_PROPERTY_ERR,
+            "Invalid property line: '%s' in the grammar file at line %d",
+            line,
+            lineCount);
       }
       String propName = line.substring(0, eqIdx).trim();
       String propValue = line.substring(eqIdx + 1).trim();
       if (propName.isEmpty() || propValue.isEmpty()) {
-        Out.error("Invalid property line: '%s' in the grammar file at line %d", line, lineCount);
-        throw GeneratorException.create(ErrorType.ERR_PARSER_PROPERTY_ERR);
+        throw GeneratorException.create(
+            ErrorType.ERR_PARSER_PROPERTY_ERR,
+            "Invalid property line: '%s' in the grammar file at line %d",
+            line,
+            lineCount);
       }
       switch (propName) {
         case "class" -> specBuilder.parserClassName(propValue);
         case "package" -> specBuilder.parserPackageName(propValue);
         default -> {
-          Out.error("Invalid property line: '%s' in the grammar file at line %d!", line, lineCount);
-          throw GeneratorException.create(ErrorType.ERR_PARSER_PROPERTY_ERR);
+          throw GeneratorException.create(
+              ErrorType.ERR_PARSER_PROPERTY_ERR,
+              "Invalid property line: '%s' in the grammar file at line %d",
+              line,
+              lineCount);
         }
       }
     }
@@ -144,14 +162,17 @@ public class GrammarSpecParser {
   private class ProductionRuleLineParser implements LineParser {
 
     private static final Pattern PATTERN_PRODUCTION = Pattern.compile("([^\\s]+)\\s*->\\s*(.*)");
-    private static final Pattern PATTERN_RULE = Pattern.compile("[A-Za-z]+|\\S");
+    private static final Pattern PATTERN_RULE = Pattern.compile("[A-Za-z_][A-Za-z0-9_]*\'*|\\S");
 
     @Override
     public void parseLine(String line) {
       Matcher matcher = PATTERN_PRODUCTION.matcher(line);
       if (!matcher.matches()) {
-        Out.error("Invalid syntax line: '%s' in the grammar file at line %d!", line, lineCount);
-        throw GeneratorException.create(ErrorType.ERR_PARSER_PRODUCTION_RULE_INVALID);
+        throw GeneratorException.create(
+            ErrorType.ERR_PARSER_PRODUCTION_RULE_INVALID,
+            "Invalid syntax line: '%s' in the grammar file at line %d!",
+            line,
+            lineCount);
       }
       Grammar.NonTerminal lhs = Grammar.NonTerminal.of(matcher.group(1));
       List<Grammar.Alternative> rule = parseRule(matcher.group(2));
@@ -160,7 +181,7 @@ public class GrammarSpecParser {
 
     private List<Grammar.Alternative> parseRule(String rule) {
       // Further parse the rule into alternatives and symbols/terminals
-      String[] alternatives = rule.split("\\|");
+      String[] alternatives = rule.split("\\|", -1);
       List<Grammar.Alternative> rules = new ArrayList<>();
       for (String alternative : alternatives) {
         List<Grammar.Symbol> symbolList = new ArrayList<>();
@@ -172,8 +193,11 @@ public class GrammarSpecParser {
           Grammar.Symbol symbol = Grammar.Symbol.parse(symbolMatcher.group());
           if (symbol instanceof Grammar.Terminal terminal && terminal.isEpsilon()) {
             if (foundEpsilon) {
-              Out.error("Invalid production rule: '%s' in the grammar file at line %d! Multiple epsilons not allowed within an alternative", rule, lineCount);
-              throw GeneratorException.create(ErrorType.ERR_PARSER_MULTI_EPSILON);
+              throw GeneratorException.create(
+                  ErrorType.ERR_PARSER_MULTI_EPSILON,
+                  "Invalid production rule: '%s' in the grammar file at line %d! Multiple epsilons not allowed within an alternative",
+                  rule,
+                  lineCount);
             }
             foundEpsilon = true;
           }

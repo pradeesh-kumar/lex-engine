@@ -11,6 +11,41 @@ import org.junit.jupiter.api.Test;
 
 public class DisjointIntSetTest {
 
+  @Test
+  void indexesAllIntegerBoundariesWithoutOverflow() {
+    DisjointIntSet set =
+        DisjointIntSet.from(
+            List.of(Range.of(Integer.MIN_VALUE, -1), Range.of(-1, Integer.MAX_VALUE)));
+    assertEquals(
+        List.of(Range.of(Integer.MIN_VALUE, -2), Range.of(-1), Range.of(0, Integer.MAX_VALUE)),
+        set.ranges());
+    assertEquals(Range.of(-1), set.getRange(-1));
+    assertEquals(Range.of(0, Integer.MAX_VALUE), set.getRange(Integer.MAX_VALUE));
+    assertEquals(Integer.MIN_VALUE, set.minVal());
+    assertEquals(Integer.MAX_VALUE, set.maxVal());
+  }
+
+  @Test
+  void indexedQueriesTrackRandomRangePartitionsAfterInsertions() {
+    Random random = new Random(13);
+    DisjointIntSet set = new DisjointIntSet();
+    Set<Integer> covered = new HashSet<>();
+    for (int i = 0; i < 120; i++) {
+      int start = random.nextInt(100) - 50;
+      int end = start + random.nextInt(15);
+      set.addRange(start, end);
+      for (int point = start; point <= end; point++) covered.add(point);
+      for (int point = -55; point <= 70; point++) {
+        Range found = set.getRange(point);
+        assertEquals(covered.contains(point), found != null);
+        if (found != null) assertTrue(found.start() <= point && found.end() >= point);
+      }
+      List<Range> expected =
+          set.ranges().stream().filter(r -> r.start() >= -20 && r.end() <= 20).toList();
+      assertEquals(expected, set.getIntersection(-20, 20));
+    }
+  }
+
   // Input  <- [97, 99] [97, 100] [98, 108]
   // Output -> [97, 97] [98, 99], [100, 100], [101, 108]
   @Test

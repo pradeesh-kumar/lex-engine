@@ -1,52 +1,25 @@
-# This is a Parser Grammar Specification file.
-# Each section is separated by the delimiter '---'
-# Line starts with '#' are treated as comments.
+# A complete expression recognizer with a lexer and a labeled parse tree.
+package org.lexengine.examples.generated;
 
-# Metadata Section
-package org.lexengine.parser.generated;
-
-import java.util.*;
-
-public class MyParser {
-
+public class ArithmeticParser {
 }
 
 ---
-# Token Definitions
-# Syntax as follows
-# <TokenGroupName>: {
-#    "tokenName": "regex",
-#     ...
-# }
-
+ident: "[a-zA-Z_][a-zA-Z0-9_]*"
+num: "[0-9]+"
 Operator: {
-  Plus: "+",
-  Minus: "-",
-  Multiply: "*",
-  Divide: "/"
+  plus: "\+",
+  minus: "-",
+  multiply: "\*",
+  divide: "/",
+  open: "\(",
+  close: "\)"
 }
-
-Identifier: "[a-zA-Z_][a-zA-Z0-9_]*"
-Integer: "[0-9]|[1-9][0-9]*"
-
-# Special token to containing ignore regex
-TOKEN_IGNORE: {
- "[\ \t\b\f\r\n]+"   # Whitespace
-}
+TOKEN_IGNORE: { "[ \t\r\n]+" }
 
 ---
-
-# Grammar Definitions
-# Productions must be in upper case.
-# Terminals must be in lower case
-# Note: Please do not use the testToken character '|' in the testToken returned by the Lexer.
-# This has special meaning 'alternative' Parser grammar. Use the name 'or' instead.
-EXPR -> EXPR ('+' | '-') TERM  $ExprOperation
-        | TERM $Term;
-
-TERM -> TERM ('*' | '/') FACTOR $TermOperation
-      | FACTOR $Factor;
-
+EXPR -> TERM (('+' | '-') TERM)* $Expression;
+TERM -> FACTOR (('*' | '/') FACTOR)* $Term;
 FACTOR -> ident $Identifier
         | num $Number
-        | (EXPR) $EnclosedExpression;
+        | '(' EXPR ')' $Grouped;

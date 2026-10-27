@@ -103,7 +103,7 @@ public class ${className} {
    */
   public boolean hasNext() {
     if (peek == null) {
-      peek = next();
+      peek = ${methodName}();
     }
     return peek != null;
   }
@@ -114,6 +114,7 @@ public class ${className} {
    * @return the next testToken, or null if none available
    */
   public ${returnType} peek() {
+    hasNext();
     return this.peek;
   }
 
@@ -398,7 +399,7 @@ class DynamicCharBuffer {
    * Rolls back the index by one position, effectively undoing the last call to {@link #next()}.
    */
   public void rollback() {
-    if (index >= startIndex) {
+    if (index > startIndex) {
       --index;
     }
   }
@@ -423,28 +424,26 @@ class DynamicCharBuffer {
    * Loads more characters into the buffer if necessary.
    */
   private void loadBufferIfRequired() {
-    if (eof || index < length) {
-      return;
-    }
-    int newCapacity = length == 0 || startIndex > (length >> 1) ? initialCapacity : length * 2;
+    if (eof || index < length) return;
+    int retained = length - startIndex;
+    int newCapacity = Math.max(initialCapacity, Math.max(retained + 1, retained * 2));
     char[] newBuffer = new char[newCapacity];
-    if (buffer == null) {
-      buffer = newBuffer;
-    } else {
-      System.arraycopy(buffer, startIndex, newBuffer, 0, length - startIndex);
-      length -= startIndex;
-      index -= startIndex;
-      startIndex = 0;
-    }
+    if (buffer != null) System.arraycopy(buffer, startIndex, newBuffer, 0, retained);
+    index -= startIndex;
+    length = retained;
+    startIndex = 0;
+    buffer = newBuffer;
     try {
-      int readSize = reader.read(newBuffer, length, buffer.length - length);
+      int readSize = reader.read(buffer, length, buffer.length - length);
+      if (readSize == 0) {
+        int next = reader.read();
+        if (next >= 0) { buffer[length++] = (char) next; return; }
+        readSize = -1;
+      }
       if (readSize == -1) {
         eof = true;
         reader.close();
-        return;
-      }
-      buffer = newBuffer;
-      length = length + readSize;
+      } else length += readSize;
     } catch (IOException e) {
       throw new DynamicBufferException("Error while reading from buffer!", e);
     }

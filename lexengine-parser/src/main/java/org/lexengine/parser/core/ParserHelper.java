@@ -1,103 +1,91 @@
 /*
-* Copyright (c) 2025 lex-engine
+* Copyright (c) 2026 lex-engine
 * Author: Pradeesh Kumar
 */
 package org.lexengine.parser.core;
 
-import org.lexengine.commons.logging.Out;
+import java.util.*;
+import org.lexengine.commons.error.ErrorType;
+import org.lexengine.commons.error.GeneratorException;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Predicate;
-
-/** Provides utility methods for parsing. */
+/** Grammar transformations used by the predictive generators. */
 public final class ParserHelper {
-
   private ParserHelper() {}
 
   /**
-   * Eliminates left recursion from a given grammar.
-   *
-   * <p>Left recursion occurs when a non-terminal symbol can be rewritten to itself, either directly
-   * or indirectly. This method transforms the grammar to eliminate such left recursion, making it
-   * suitable for top-down parsing.
-   *
-   * @param grammar the input grammar to eliminate left recursion from
-   * @return a new grammar with left recursion eliminated
+   * Eliminates ordered indirect recursion and direct left recursion without modifying the input.
    */
   public static Grammar eliminateLeftRecursion(Grammar grammar) {
-    Out.info("Eliminating left recursion from the Grammar");
-    Grammar.ProductionMap newProductions = new Grammar.ProductionMap();
-
-    for (var rule : grammar.productions().rules()) {
-      var lhs = rule.lhs();
-      var rhs = rule.alternatives();
-
-      // Check if the non-terminal has any left recursive productions
-      if (hasLeftRecursion(lhs, rhs)) {
-        var updatedProductions = eliminateLeftRecursion(lhs, rhs);
-        newProductions.addAll(updatedProductions);
-      } else {
-        newProductions.add(rule);
+    Map<Grammar.NonTerminal, List<Grammar.Alternative>> result = new LinkedHashMap<>();
+    List<Grammar.NonTerminal> order = new ArrayList<>(grammar.productions().nonTerminals());
+    Set<Grammar.NonTerminal> names = new HashSet<>(order);
+    for (int i = 0; i < order.size(); i++) {
+      Grammar.NonTerminal lhs = order.get(i);
+      List<Grammar.Alternative> alternatives =
+          new ArrayList<>(grammar.productions().get(lhs).alternatives());
+      for (int j = 0; j < i; j++) {
+        Grammar.NonTerminal previous = order.get(j);
+        List<Grammar.Alternative> expanded = new ArrayList<>();
+        for (Grammar.Alternative alternative : alternatives) {
+          if (!alternative.isEmpty() && alternative.first().equals(previous)) {
+            for (Grammar.Alternative prefix : result.get(previous)) {
+              List<Grammar.Symbol> symbols = new ArrayList<>(prefix.symbols());
+              symbols.addAll(alternative.symbols().subList(1, alternative.size()));
+              expanded.add(Grammar.Alternative.create(symbols, alternative.label()));
+            }
+          } else expanded.add(alternative);
+        }
+        alternatives = expanded;
       }
+      List<Grammar.Alternative> alpha = new ArrayList<>();
+      List<Grammar.Alternative> beta = new ArrayList<>();
+      for (Grammar.Alternative alternative : alternatives) {
+        if (!alternative.isEmpty() && alternative.first().equals(lhs)) {
+          // A -> A contributes no strings and can be discarded.
+          if (alternative.size() > 1)
+            alpha.add(
+                Grammar.Alternative.create(
+                    alternative.symbols().subList(1, alternative.size()), alternative.label()));
+        } else beta.add(alternative);
+      }
+      if (beta.isEmpty())
+        throw GeneratorException.create(
+            ErrorType.ERR_GRAMMAR_PRODUCTION_INVALID,
+            "Nonterminal %s has no terminating alternative",
+            lhs);
+      if (alpha.isEmpty()) {
+        result.put(lhs, beta);
+        continue;
+      }
+      String name = lhs.name() + "'";
+      while (names.contains(Grammar.NonTerminal.of(name))) name += "'";
+      Grammar.NonTerminal prime = Grammar.NonTerminal.of(name);
+      names.add(prime);
+      result.put(lhs, append(beta, prime));
+      List<Grammar.Alternative> tails = append(alpha, prime);
+      tails.add(Grammar.Alternative.create());
+      result.put(prime, tails);
     }
-    Grammar convertedGrammar = new Grammar(newProductions, grammar.startSymbol());
-    Out.debug("Grammar after eliminating left recursion: %s", convertedGrammar.toString());
-    return convertedGrammar;
+    Grammar.ProductionMap productions = new Grammar.ProductionMap();
+    result.forEach(
+        (lhs, alternatives) -> {
+          Grammar.ProductionRule original = grammar.productions().get(lhs);
+          productions.add(
+              original != null && original.alternatives().equals(alternatives)
+                  ? original
+                  : Grammar.ProductionRule.create(lhs, alternatives));
+        });
+    return new Grammar(productions, grammar.startSymbol());
   }
 
-  /**
-   * Checks if a non-terminal has any left recursive productions.
-   *
-   * @param nonTerminal the non-terminal to check
-   * @param alternatives the productions associated with the non-terminal
-   * @return true if the non-terminal has any left recursive productions, false otherwise
-   */
-  private static boolean hasLeftRecursion(
-      Grammar.NonTerminal nonTerminal, List<Grammar.Alternative> alternatives) {
-    return alternatives.stream()
-        .filter(Predicate.not(Grammar.Alternative::isEmpty))
-        .map(Grammar.Alternative::first)
-        .anyMatch(p -> p.equals(nonTerminal));
-  }
-
-  /**
-   * Eliminates left recursion from a specific non-terminal and its associated productions.
-   *
-   * <p>This method is used internally by {@link #eliminateLeftRecursion(Grammar)} to eliminate left
-   * recursion from a grammar.
-   *
-   * @param nonTerminal the non-terminal to eliminate left recursion from
-   * @param productions the productions associated with the non-terminal
-   * @return a List of updated productions for the non-terminal and any new non-terminals introduced
-   */
-  private static List<Grammar.ProductionRule> eliminateLeftRecursion(
-      Grammar.NonTerminal nonTerminal, List<Grammar.Alternative> productions) {
-    var newNonTerminal = Grammar.NonTerminal.of(nonTerminal.name() + "'");
-    List<Grammar.Alternative> alphaProductions = new ArrayList<>();
-    List<Grammar.Alternative> betaProductions = new ArrayList<>();
-
-    for (var production : productions) {
-      if (!production.isEmpty() && production.first().equals(nonTerminal)) {
-        // Left recursive production
-        List<Grammar.Symbol> alpha = new ArrayList<>(production.symbols().subList(1, production.size()));
-        alpha.add(newNonTerminal);
-        alphaProductions.add(Grammar.Alternative.create(alpha));
-      } else {
-        // Non-left recursive production
-        List<Grammar.Symbol> beta = new ArrayList<>(production.symbols());
-        beta.add(newNonTerminal);
-        betaProductions.add(Grammar.Alternative.create(beta));
-      }
+  private static List<Grammar.Alternative> append(
+      List<Grammar.Alternative> alternatives, Grammar.NonTerminal tail) {
+    List<Grammar.Alternative> result = new ArrayList<>();
+    for (Grammar.Alternative alternative : alternatives) {
+      List<Grammar.Symbol> symbols = new ArrayList<>(alternative.symbols());
+      symbols.add(tail);
+      result.add(Grammar.Alternative.create(symbols, alternative.label()));
     }
-
-    // Add epsilon production for the new non-terminal
-    alphaProductions.add(Grammar.Alternative.create(List.of(Grammar.Terminal.createEpsilon())));
-
-    // Update productions for the grammar
-    List<Grammar.ProductionRule> updatedProductions = new ArrayList<>();
-    updatedProductions.add(Grammar.ProductionRule.create(nonTerminal, betaProductions));
-    updatedProductions.add(Grammar.ProductionRule.create(newNonTerminal, alphaProductions));
-    return updatedProductions;
+    return result;
   }
 }

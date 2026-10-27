@@ -124,6 +124,26 @@ public class DynamicCharBufferTest {
   }
 
   @Test
+  void retainsCurrentTokenAcrossRefillsAndEndOfInput() {
+    DynamicCharBuffer buffer = new DynamicCharBuffer(new java.io.StringReader("abcdef"), 4);
+    for (int i = 0; i < 3; i++) buffer.next();
+    buffer.clearTillCurrent();
+    while (buffer.hasNext()) buffer.next();
+    assertEquals("def", buffer.getStringTillCurrent());
+    assertFalse(buffer.hasNext());
+  }
+
+  @Test
+  void rollbackCannotCrossTheCurrentWindowStart() {
+    DynamicCharBuffer buffer = new DynamicCharBuffer(new java.io.StringReader("abc"), 2);
+    buffer.rollback();
+    assertEquals('a', buffer.next());
+    buffer.clearTillCurrent();
+    buffer.rollback();
+    assertEquals('b', buffer.next());
+  }
+
+  @Test
   public void testInvalidInitialCapacity() {
     InputStream inputStream = new ByteArrayInputStream("".getBytes(StandardCharsets.UTF_8));
     Reader reader = new InputStreamReader(inputStream);

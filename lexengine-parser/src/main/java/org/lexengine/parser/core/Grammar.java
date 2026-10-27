@@ -1,52 +1,74 @@
+/*
+* Copyright (c) 2026 lex-engine
+* Author: Pradeesh Kumar
+*/
 package org.lexengine.parser.core;
 
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.lexengine.commons.error.ErrorType;
 import org.lexengine.commons.error.GeneratorException;
-import org.lexengine.commons.logging.Out;
 
-import java.util.*;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
-
-/**
- * Grammar consists set of productions. A Symbol can be either Terminal or NonTerminal
- *
- * <p>Example:
- *
- * <p>EXPR -> EXPR + TERM | EXPR - TERM | TERM TERM -> TERM * FACTOR | TERM / FACTOR | FACTOR FACTOR
- * -> ident | num | (EXPR)
- *
- * @param productions
- */
+/** A context-free grammar. Epsilon is represented by an empty alternative. */
 public record Grammar(ProductionMap productions, NonTerminal startSymbol) {
-
   public Grammar {
-    Objects.requireNonNull(startSymbol, "Start symbol cannot be null");
-    Objects.requireNonNull(productions, "productions cannot be null");
+    Objects.requireNonNull(productions, "productions");
     if (productions.isEmpty()) {
-      throw GeneratorException.create(ErrorType.ERR_GRAMMAR_FILE_EMPTY_PRODUCTION);
+      throw GeneratorException.create(
+          ErrorType.ERR_GRAMMAR_FILE_EMPTY_PRODUCTION, "Productions cannot be empty");
+    }
+    Objects.requireNonNull(startSymbol, "startSymbol");
+    if (!productions.containsNonTerminal(startSymbol)) {
+      throw GeneratorException.create(
+          ErrorType.ERR_GRAMMAR_PRODUCTION_INVALID,
+          "Start symbol %s has no production",
+          startSymbol);
     }
     productions.validate();
+    productions.startSymbol = startSymbol;
+    productions.invalidate();
   }
 
   public record ProductionRule(int index, NonTerminal lhs, List<Alternative> alternatives) {
-    private static int idCounter = 0;
+    private static final AtomicInteger NEXT_ID = new AtomicInteger();
+
+    public ProductionRule {
+      Objects.requireNonNull(lhs, "lhs");
+      alternatives = List.copyOf(alternatives);
+      if (alternatives.isEmpty())
+        throw new IllegalArgumentException("A production needs an alternative");
+    }
 
     public static ProductionRule create(NonTerminal lhs, List<Alternative> alternatives) {
-      Objects.requireNonNull(lhs, "lhs");
-      Objects.requireNonNull(alternatives, "alternatives");
-      return new ProductionRule(idCounter++, lhs, alternatives);
+      return new ProductionRule(NEXT_ID.getAndIncrement(), lhs, alternatives);
     }
   }
 
   public record Alternative(List<Symbol> symbols, String label) {
+    public Alternative {
+      symbols = List.copyOf(symbols);
+      label = label == null ? "DefaultLabel" : label;
+      long epsilons =
+          symbols.stream().filter(s -> s instanceof Terminal t && t.isEpsilon()).count();
+      if (epsilons > 0) {
+        if (symbols.size() != 1)
+          throw GeneratorException.create(
+              ErrorType.ERR_PARSER_MULTI_EPSILON,
+              "Epsilon must be the only symbol in an alternative");
+        symbols = List.of();
+      }
+    }
 
     public static Alternative create() {
-      return new Alternative(List.of(), "DefaultLabel");
+      return create(List.of());
+    }
+
+    public static Alternative create(List<Symbol> symbols) {
+      return create(symbols, null);
     }
 
     public static Alternative create(List<Symbol> symbols, String label) {
-      return new Alternative(symbols,  label);
+      return new Alternative(symbols, label);
     }
 
     public boolean isEmpty() {
@@ -66,17 +88,12 @@ public record Grammar(ProductionMap productions, NonTerminal startSymbol) {
     }
   }
 
+  /** Ordered productions with fixed-point FIRST/FOLLOW computation, including cyclic grammars. */
   public static class ProductionMap {
-
-    private final Map<NonTerminal, ProductionRule> rules;
-    private final Map<NonTerminal, Set<Terminal>> firstSetMap;
-    private final Map<NonTerminal, Set<Terminal>> followSetMap;
-
-    public ProductionMap() {
-      this.rules = new HashMap<>();
-      this.firstSetMap = new HashMap<>();
-      this.followSetMap = new HashMap<>();
-    }
+    private final Map<NonTerminal, ProductionRule> rules = new LinkedHashMap<>();
+    private final Map<NonTerminal, Set<Terminal>> first = new LinkedHashMap<>();
+    private final Map<NonTerminal, Set<Terminal>> follow = new LinkedHashMap<>();
+    private NonTerminal startSymbol;
 
     public boolean isEmpty() {
       return rules.isEmpty();
@@ -87,172 +104,133 @@ public record Grammar(ProductionMap productions, NonTerminal startSymbol) {
     }
 
     public Set<NonTerminal> nonTerminals() {
-      return rules.keySet();
+      return Collections.unmodifiableSet(rules.keySet());
     }
 
     public Collection<ProductionRule> rules() {
-      return rules.values();
+      return Collections.unmodifiableCollection(rules.values());
     }
 
     public boolean containsNonTerminal(NonTerminal nonTerminal) {
       return rules.containsKey(nonTerminal);
     }
 
+    public ProductionRule get(NonTerminal key) {
+      return rules.get(key);
+    }
+
+    private void invalidate() {
+      first.clear();
+      follow.clear();
+    }
+
     protected void validate() {
-      Set<NonTerminal> keys = nonTerminals();
-      Set<NonTerminal> invalidNonTerminals = this.rules.values().stream()
-          .map(ProductionRule::alternatives)
-          .flatMap(List::stream)
-          .flatMap(a -> a.symbols.stream())
-          .filter(symbol -> symbol instanceof Grammar.NonTerminal)
-          .map(symbol -> (Grammar.NonTerminal) symbol)
-          .filter(Predicate.not(keys::contains))
-          .collect(Collectors.toSet());
-      if (!invalidNonTerminals.isEmpty()) {
-        Out.error("Invalid non-terminals! Production rule not found for these non-terminal symbols: %s", invalidNonTerminals);
-        throw GeneratorException.create(ErrorType.ERR_GRAMMAR_PRODUCTION_INVALID);
+      for (ProductionRule rule : rules.values()) {
+        for (Alternative alternative : rule.alternatives()) {
+          for (Symbol symbol : alternative.symbols()) {
+            if (symbol instanceof NonTerminal nt && !rules.containsKey(nt)) {
+              throw GeneratorException.create(
+                  ErrorType.ERR_GRAMMAR_PRODUCTION_INVALID, "No production for nonterminal %s", nt);
+            }
+            if (symbol instanceof Terminal t && t.equals(Terminal.endOfInput())) {
+              throw GeneratorException.create(
+                  ErrorType.ERR_GRAMMAR_PRODUCTION_INVALID, "Terminal name %s is reserved", t);
+            }
+          }
+        }
       }
     }
 
     protected void add(ProductionRule rule) {
+      ProductionRule old = rules.get(rule.lhs());
+      if (old != null) {
+        List<Alternative> alternatives = new ArrayList<>(old.alternatives());
+        alternatives.addAll(rule.alternatives());
+        rule = ProductionRule.create(rule.lhs(), alternatives);
+      }
       rules.put(rule.lhs(), rule);
+      invalidate();
     }
 
     public void addAll(List<ProductionRule> productionRules) {
       productionRules.forEach(this::add);
     }
 
-    public ProductionRule get(NonTerminal key) {
-      return rules.get(key);
+    public Set<Terminal> getFirstSet(NonTerminal nonTerminal) {
+      computeFirst();
+      if (!rules.containsKey(nonTerminal))
+        throw new IllegalArgumentException("Unknown nonterminal " + nonTerminal);
+      return Set.copyOf(first.get(nonTerminal));
     }
 
-    public Set<Terminal> getFirstSet(NonTerminal nonTerminal) {
-      if (firstSetMap.containsKey(nonTerminal)) {
-        return Set.copyOf(firstSetMap.get(nonTerminal));
+    public Set<Terminal> firstOf(List<? extends Symbol> sequence) {
+      computeFirst();
+      return Set.copyOf(firstOf(sequence, first));
+    }
+
+    private static Set<Terminal> firstOf(
+        List<? extends Symbol> sequence, Map<NonTerminal, Set<Terminal>> sets) {
+      Set<Terminal> result = new LinkedHashSet<>();
+      for (Symbol symbol : sequence) {
+        Set<Terminal> values =
+            symbol instanceof Terminal t ? Set.of(t) : sets.get((NonTerminal) symbol);
+        for (Terminal t : values) if (!t.isEpsilon()) result.add(t);
+        if (!values.contains(Terminal.createEpsilon())) return result;
       }
-      ProductionRule rule = get(nonTerminal);
-      Set<Terminal> firstSet = new HashSet<>();
-      List<Alternative> alternatives = rule.alternatives();
-      for (Alternative alternative : alternatives) {
-        boolean foundNonEpsilon = false;
-        for (Symbol symbol : alternative.symbols) {
-          if (symbol instanceof Grammar.Terminal) {
-            firstSet.add((Grammar.Terminal) symbol);
-            foundNonEpsilon = true;
-            break;
+      result.add(Terminal.createEpsilon());
+      return result;
+    }
+
+    private void computeFirst() {
+      if (!first.isEmpty()) return;
+      nonTerminals().forEach(nt -> first.put(nt, new LinkedHashSet<>()));
+      boolean changed;
+      do {
+        changed = false;
+        for (ProductionRule rule : rules.values()) {
+          for (Alternative alternative : rule.alternatives()) {
+            changed |= first.get(rule.lhs()).addAll(firstOf(alternative.symbols(), first));
           }
-          Set<Terminal> firstOfA = getFirstSet((NonTerminal) symbol);
-          if (!firstOfA.contains(Terminal.EPSILON_TERMINAL)) {
-            foundNonEpsilon = true;
-            break;
-          }
-          firstOfA.remove(Terminal.EPSILON_TERMINAL);
-          firstSet.addAll(firstOfA);
         }
-        if (!foundNonEpsilon) {
-          firstSet.add(Terminal.EPSILON_TERMINAL);
-        }
-      }
-      firstSetMap.put(nonTerminal, firstSet);
-      return Set.copyOf(firstSet);
+      } while (changed);
     }
 
     public Set<Terminal> getFollowSet(NonTerminal nonTerminal) {
-      if (followSetMap.isEmpty()) {
-        new FollowSetCompute().compute();
-      }
-      return Set.copyOf(followSetMap.get(nonTerminal));
-    }
-
-    private class FollowSetCompute {
-
-      /** Map contains list of alternatives in which NonTerminal is present */
-      private final Map<NonTerminal, List<FlattenedRule>> nonTerminalToAlternatives;
-      /** Map contains indices of NonTerminal in Alternative */
-      private final Map<Alternative, Map<NonTerminal, List<Integer>>> alternativeToNonTerminalIndies;
-
-      public FollowSetCompute() {
-        this.nonTerminalToAlternatives = new HashMap<>(rules.size());
-        this.alternativeToNonTerminalIndies = new HashMap<>(rules.size());
-      }
-
-      private void compute() {
-        initializeIndices();
-        nonTerminals().forEach(nt -> followSetMap.put(nt, getFollowSet(nt)));
-      }
-
-      private Set<Terminal> getFollowSet(NonTerminal nonTerminal) {
-        if (followSetMap.containsKey(nonTerminal)) {
-          return Set.copyOf(followSetMap.get(nonTerminal));
-        }
-        Set<Terminal> followSet = new HashSet<>();
-        List<FlattenedRule> flattenedRules = nonTerminalToAlternatives.get(nonTerminal);
-        for (FlattenedRule flattenedRule : flattenedRules) {
-          Alternative alternative = flattenedRule.alternative;
-          List<Integer> indices = alternativeToNonTerminalIndies.get(alternative).get(nonTerminal);
-          for (int i : indices) {
-            if (i == alternative.size() - 1) {
-              followSet.addAll(getFollowSet(flattenedRule.lhs));
-              continue;
-            }
-            int nextIndex;
-            for (nextIndex = i + 1; nextIndex < alternative.size(); nextIndex++) {
-              Symbol next = alternative.get(i + 1);
-              if (next instanceof Grammar.Terminal) {
-                followSet.add((Grammar.Terminal) next);
-                break;
+      computeFirst();
+      if (!rules.containsKey(nonTerminal))
+        throw new IllegalArgumentException("Unknown nonterminal " + nonTerminal);
+      if (follow.isEmpty()) {
+        nonTerminals().forEach(nt -> follow.put(nt, new LinkedHashSet<>()));
+        NonTerminal start = startSymbol == null ? rules.keySet().iterator().next() : startSymbol;
+        follow.get(start).add(Terminal.endOfInput());
+        boolean changed;
+        do {
+          changed = false;
+          for (ProductionRule rule : rules.values()) {
+            for (Alternative alternative : rule.alternatives()) {
+              List<Symbol> symbols = alternative.symbols();
+              for (int i = 0; i < symbols.size(); i++) {
+                if (!(symbols.get(i) instanceof NonTerminal nt)) continue;
+                Set<Terminal> suffix = firstOf(symbols.subList(i + 1, symbols.size()), first);
+                for (Terminal terminal : suffix)
+                  if (!terminal.isEpsilon()) changed |= follow.get(nt).add(terminal);
+                if (suffix.contains(Terminal.createEpsilon()))
+                  changed |= follow.get(nt).addAll(follow.get(rule.lhs()));
               }
-              Set<Terminal> firstSetOfNext = getFirstSet((NonTerminal) next);
-              followSet.addAll(firstSetOfNext);
-              if (!firstSetOfNext.contains(Terminal.EPSILON_TERMINAL)) {
-                break;
-              }
-            }
-            if (nextIndex == alternative.size()) {
-              followSet.addAll(getFollowSet(flattenedRule.lhs));
             }
           }
-        }
-        followSetMap.put(nonTerminal, followSet);
-        return Set.copyOf(followSet);
+        } while (changed);
       }
-
-      private void initializeIndices() {
-        rules().forEach(rule -> {
-          for (Alternative alternative : rule.alternatives()) {
-            List<Symbol> symbols = alternative.symbols();
-            for (int i = 0; i < symbols.size(); i++) {
-              Symbol symbol = symbols.get(i);
-              if (symbol instanceof Grammar.Terminal) {
-                continue;
-              }
-              Grammar.NonTerminal nonTerminal = (Grammar.NonTerminal) symbol;
-              List<FlattenedRule> flattenedRule = nonTerminalToAlternatives.getOrDefault(nonTerminal, new ArrayList<>());
-              flattenedRule.add(FlattenedRule.create(rule.lhs, alternative));
-              nonTerminalToAlternatives.put(nonTerminal, flattenedRule);
-              Map<NonTerminal, List<Integer>> nonTerminalIndices = alternativeToNonTerminalIndies.getOrDefault(alternative, new HashMap<>());
-              nonTerminalIndices.getOrDefault(nonTerminal, new ArrayList<>()).add(i);
-              alternativeToNonTerminalIndies.put(alternative, nonTerminalIndices);
-            }
-          }
-        });
-      }
-
-      private record FlattenedRule(NonTerminal lhs, Alternative alternative) {
-        public static FlattenedRule create(NonTerminal lhs, Alternative alternative) {
-          return new FlattenedRule(lhs, alternative);
-        }
-      }
+      return Set.copyOf(follow.get(nonTerminal));
     }
   }
 
   public abstract static sealed class Symbol permits NonTerminal, Terminal {
-    protected String name;
-    protected String methodName;
+    protected final String name;
 
     Symbol(String name) {
-      this.name = name;
-      this.methodName = name.toLowerCase().replace("'", "Prime");
+      this.name = Objects.requireNonNull(name, "name");
+      if (name.isEmpty()) throw new IllegalArgumentException("Symbol name cannot be empty");
     }
 
     public String name() {
@@ -260,15 +238,16 @@ public record Grammar(ProductionMap productions, NonTerminal startSymbol) {
     }
 
     public String methodName() {
-      return this.methodName;
+      return name.toLowerCase(Locale.ROOT).replace("'", "Prime");
     }
 
     public String className() {
-      return Character.toUpperCase(this.methodName.charAt(0)) + this.methodName.substring(1);
+      String method = methodName();
+      return Character.toUpperCase(method.charAt(0)) + method.substring(1);
     }
 
     public static Symbol parse(String name) {
-      return name.matches("[A-Z]+") ? NonTerminal.of(name) : Terminal.of(name);
+      return name.matches("[A-Z][A-Z0-9_]*'*") ? NonTerminal.of(name) : Terminal.of(name);
     }
 
     @Override
@@ -277,89 +256,50 @@ public record Grammar(ProductionMap productions, NonTerminal startSymbol) {
     }
 
     @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      Symbol that = (Symbol) o;
-      return name.equals(that.name);
+    public boolean equals(Object obj) {
+      return obj != null && obj.getClass() == getClass() && name.equals(((Symbol) obj).name);
     }
 
     @Override
     public int hashCode() {
-      return name.hashCode();
+      return Objects.hash(getClass(), name);
     }
   }
 
   public static final class NonTerminal extends Symbol {
-
     private NonTerminal(String name) {
       super(name);
-      if (!name.matches("[A-Z]+'?")) {
-        throw new IllegalArgumentException(
-            "Invalid nonterminal: " + name + ". NonTerminals must be strictly uppercase word");
-      }
+      if (!name.matches("[A-Z][A-Z0-9_]*'*"))
+        throw new IllegalArgumentException("Nonterminals must be uppercase identifiers: " + name);
     }
 
-    static NonTerminal of(String name) {
+    public static NonTerminal of(String name) {
       return new NonTerminal(name);
-    }
-
-    @Override
-    public String toString() {
-      return super.toString();
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      return super.equals(o);
-    }
-
-    @Override
-    public int hashCode() {
-      return super.hashCode();
     }
   }
 
   public static final class Terminal extends Symbol {
-
-    private static final Terminal EPSILON_TERMINAL = new Terminal("ε");
+    private static final Terminal EPSILON = new Terminal("ε");
+    private static final Terminal EOF = new Terminal("$end");
 
     private Terminal(String name) {
       super(name);
-      if (name.matches("[A-Z]+'?")) {
-        throw new IllegalArgumentException(
-            "Invalid terminal name " + name + " Terminal name cannot start");
-      }
     }
 
     public static Terminal of(String name) {
-      if (EPSILON_TERMINAL.name().equals(name)) {
-        return EPSILON_TERMINAL;
-      }
-      return new Terminal(name);
+      return name.equals("ε") ? EPSILON : new Terminal(name);
     }
 
     public static Terminal createEpsilon() {
-      return EPSILON_TERMINAL;
+      return EPSILON;
+    }
+
+    public static Terminal endOfInput() {
+      return EOF;
     }
 
     public boolean isEpsilon() {
-      return EPSILON_TERMINAL.name().equals(this.name);
-    }
-
-    @Override
-    public String toString() {
-      return super.toString();
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      return super.equals(o);
-    }
-
-    @Override
-    public int hashCode() {
-      return super.hashCode();
+      return name.equals(EPSILON.name);
     }
   }
 }

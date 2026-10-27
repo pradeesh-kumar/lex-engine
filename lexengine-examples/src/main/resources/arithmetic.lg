@@ -1,0 +1,25 @@
+# A complete expression recognizer with a lexer and a labeled parse tree.
+package org.lexengine.examples.generated;
+
+public class ArithmeticParser {
+}
+
+---
+ident: "[a-zA-Z_][a-zA-Z0-9_]*"
+num: "[0-9]+"
+Operator: {
+  plus: "\+",
+  minus: "-",
+  multiply: "\*",
+  divide: "/",
+  open: "\(",
+  close: "\)"
+}
+TOKEN_IGNORE: { "[ \t\r\n]+" }
+
+---
+EXPR -> TERM (('+' | '-') TERM)* $Expression;
+TERM -> FACTOR (('*' | '/') FACTOR)* $Term;
+FACTOR -> ident $Identifier
+        | num $Number
+        | '(' EXPR ')' $Grouped;

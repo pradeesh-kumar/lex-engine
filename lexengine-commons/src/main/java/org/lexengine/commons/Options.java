@@ -1,9 +1,12 @@
+/*
+* Copyright (c) 2026 lex-engine
+* Author: Pradeesh Kumar
+*/
 package org.lexengine.commons;
-
-import org.lexengine.commons.logging.Out;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import org.lexengine.commons.logging.Out;
 
 public record Options(
     boolean verbose,
@@ -13,7 +16,29 @@ public record Options(
     String lexerMethodName,
     String lexerReturnType,
     String scannerClassTemplate,
-    String lexSpecFile) {
+    String lexSpecFile,
+    String outDir) {
+
+  public Options(
+      boolean verbose,
+      Charset encoding,
+      String lexerClassName,
+      String lexerPackageName,
+      String lexerMethodName,
+      String lexerReturnType,
+      String scannerClassTemplate,
+      String lexSpecFile) {
+    this(
+        verbose,
+        encoding,
+        lexerClassName,
+        lexerPackageName,
+        lexerMethodName,
+        lexerReturnType,
+        scannerClassTemplate,
+        lexSpecFile,
+        ".");
+  }
 
   private static Options defaultInstance = Options.builder().build();
 
@@ -25,7 +50,9 @@ public record Options(
         .lexerPackageName(lexerPackageName)
         .lexerMethodName(lexerMethodName)
         .lexerReturnType(lexerReturnType)
-        .scannerClassTemplate(scannerClassTemplate);
+        .scannerClassTemplate(scannerClassTemplate)
+        .lexSpecFile(lexSpecFile)
+        .outDir(outDir);
   }
 
   public static Builder builder() {
@@ -52,12 +79,11 @@ public record Options(
         case "-lc", "--lexer-class" -> builder.lexerClassName(getNextArg(args, ++i));
         case "-lm", "--lexer-method" -> builder.lexerMethodName(getNextArg(args, ++i));
         case "-lp", "--lexer-package" -> builder.lexerPackageName(getNextArg(args, ++i));
-        case "-st", "--scanner-template" -> builder.scannerClassTemplate(getNextArg(args, ++i));
+        case "-st", "-sc", "--scanner-template" ->
+            builder.scannerClassTemplate(getNextArg(args, ++i));
         case "-sp", "--lex-spec-file" -> builder.lexSpecFile(getNextArg(args, ++i));
-        default -> {
-          Out.error("Unknown option: %x", args[i]);
-          System.exit(1);
-        }
+        case "-d", "--output-directory" -> builder.outDir(getNextArg(args, ++i));
+        default -> throw new IllegalArgumentException("Unknown option: " + args[i]);
       }
       i++;
     }
@@ -80,9 +106,7 @@ public record Options(
     if (i < args.length) {
       return args[i];
     } else {
-      Out.error("No argument specified after the option %s", args[i - 1]);
-      System.exit(1);
-      return null;
+      throw new IllegalArgumentException("Missing value for " + args[i - 1]);
     }
   }
 
@@ -95,8 +119,9 @@ public record Options(
     private String lexerPackageName = "org.lexengine.generator";
     private String lexerMethodName = "nextToken";
     private String lexerReturnType = "Token";
-    private String scannerClassTemplate = Thread.currentThread().getContextClassLoader().getResource("scanner-class.tpl").getPath();
-    private String lexSpecFile = Thread.currentThread().getContextClassLoader().getResource("lexer-spec.spec").getPath();
+    private String scannerClassTemplate = "scanner-class.tpl";
+    private String lexSpecFile = "lexer-spec.spec";
+    private String outDir = ".";
 
     public Builder verbose(boolean verbose) {
       this.verbose = verbose;
@@ -138,6 +163,11 @@ public record Options(
       return this;
     }
 
+    public Builder outDir(String outDir) {
+      this.outDir = outDir;
+      return this;
+    }
+
     public Options build() {
       return new Options(
           verbose,
@@ -147,8 +177,8 @@ public record Options(
           lexerMethodName,
           lexerReturnType,
           scannerClassTemplate,
-          lexSpecFile
-      );
+          lexSpecFile,
+          outDir);
     }
   }
 }

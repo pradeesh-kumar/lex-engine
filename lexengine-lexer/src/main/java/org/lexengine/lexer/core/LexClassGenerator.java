@@ -4,15 +4,14 @@
 */
 package org.lexengine.lexer.core;
 
+import java.io.*;
+import java.util.*;
+import java.util.stream.Collectors;
 import org.lexengine.commons.Options;
 import org.lexengine.commons.TemplateRenderer;
 import org.lexengine.commons.error.ErrorType;
 import org.lexengine.commons.error.GeneratorException;
 import org.lexengine.commons.logging.Out;
-
-import java.io.*;
-import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * An interface representing a generator for lexical classes. Implementations of this interface
@@ -47,20 +46,23 @@ class TableBasedLexClassGenerator implements LexClassGenerator {
    *
    * @param dfa DFA used to generate the lexical class
    */
-  public TableBasedLexClassGenerator(
-      Dfa dfa, Options options) {
+  public TableBasedLexClassGenerator(Dfa dfa, Options options) {
     this.dfa = dfa;
     this.options = options;
   }
 
   /** Generates the Lexer Class based on the provided DFA and lexical specification. */
   public Reader generate() {
-    try (Reader scannerClassTemplateReader = new FileReader(options.scannerClassTemplate())) {
+    try (Reader scannerClassTemplateReader =
+        org.lexengine.commons.Resources.reader(
+            options.scannerClassTemplate(), options.encoding())) {
       Out.info("Rendering the Lexer class");
-      TemplateRenderer renderer = new TemplateRenderer(scannerClassTemplateReader, prepareAttributes());
+      TemplateRenderer renderer =
+          new TemplateRenderer(scannerClassTemplateReader, prepareAttributes());
       return new StringReader(renderer.render());
     } catch (IOException e) {
-      throw GeneratorException.create(ErrorType.ERR_SCANNER_TEMPLATE_READ, e, "Error reading scanner template");
+      throw GeneratorException.create(
+          ErrorType.ERR_SCANNER_TEMPLATE_READ, e, "Error reading scanner template");
     }
   }
 
@@ -85,7 +87,7 @@ class TableBasedLexClassGenerator implements LexClassGenerator {
     attributes.put("compressedTransitionTbl", getCompressedTransitionTbl());
     attributes.put("finalStates", getFinalStates());
     attributes.put("startState", String.valueOf(dfa.startState()));
-    attributes.put("statesCount", String.valueOf(dfa.statesCount()));
+    attributes.put("statesCount", String.valueOf(dfa.statesCount() + 1));
     attributes.put("alphabetsCount", String.valueOf(dfa.alphabetSize()));
     attributes.put("switchCases", getFinalStateSwitchCases());
     attributes.put("alphabetIndex", getAlphabetIndex());
@@ -109,7 +111,8 @@ class TableBasedLexClassGenerator implements LexClassGenerator {
       byte[] compressedData = LexUtils.compress(serializedData);
       return Base64.getEncoder().encodeToString(compressedData);
     } catch (IOException e) {
-      throw GeneratorException.create(ErrorType.ERR_CLASS_GENERATE, "Error while compressing the transition table!", e);
+      throw GeneratorException.create(
+          ErrorType.ERR_CLASS_GENERATE, "Error while compressing the transition table!", e);
     }
   }
 

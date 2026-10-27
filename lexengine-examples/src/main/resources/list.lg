@@ -1,0 +1,8 @@
+package org.lexengine.examples.generated;
+public class ListParser {}
+---
+num: "[0-9]+"
+Punctuation: { open: "\[", close: "\]", comma: "," }
+TOKEN_IGNORE: "[ \t\r\n]+"
+---
+LIST -> '[' (num (',' num)*)? ']' $NumberList;

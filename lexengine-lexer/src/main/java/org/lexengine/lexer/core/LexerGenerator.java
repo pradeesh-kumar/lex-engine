@@ -7,7 +7,6 @@ package org.lexengine.lexer.core;
 import java.io.Reader;
 import java.util.List;
 import java.util.Map;
-
 import org.lexengine.commons.Options;
 import org.lexengine.commons.logging.Out;
 
@@ -61,13 +60,18 @@ public class LexerGenerator {
     }
     LexUtils.extractAlphabetsFromRegex(lexRules, languageAlphabets);
     Out.debug("Language alphabets: " + languageAlphabets);
-    Map<Range, Integer> alphabetIndex = LexUtils.createAlphabetsIndex(this.languageAlphabets.ranges());
+    Map<Range, Integer> alphabetIndex =
+        LexUtils.createAlphabetsIndex(this.languageAlphabets.ranges());
     Nfa nfa = new NfaGenerator(lexRules, languageAlphabets, alphabetIndex).generate();
     Dfa dfa = new DfaGenerator(nfa).generate();
+    if (dfa.finalStates().get(dfa.startState())) {
+      throw org.lexengine.commons.error.GeneratorException.create(
+          org.lexengine.commons.error.ErrorType.ERR_LEX_REGEX_INVALID,
+          "Lexer rules must not match empty input");
+    }
     dfa = new DfaMinimizer(dfa).minimize();
     LexClassGenerator lexClassGenerator = new TableBasedLexClassGenerator(dfa, options);
     Reader lexerClassReader = lexClassGenerator.generate();
     return new LexerOut(lexerClassReader, options.lexerClassName(), options.lexerPackageName());
   }
-
 }

@@ -43,4 +43,76 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
+    <dependencies>
+        <dependency>
+            <groupId>org.lexengine</groupId>
+            <artifactId>lexengine-parser</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>generate-example-sources</id>
+                        <phase>generate-sources</phase>
+                        <goals><goal>run</goal></goals>
+                        <configuration>
+                            <target>
+                                <mkdir dir="${project.build.directory}/generated-sources/lexengine"/>
+                                <macrodef name="generate-parser">
+                                    <attribute name="grammar"/>
+                                    <attribute name="type"/>
+                                    <sequential>
+                                        <java classname="org.lexengine.parser.Main" fork="true" failonerror="true">
+                                            <classpath refid="maven.compile.classpath"/>
+                                            <arg value="--grammar"/>
+                                            <arg value="${project.basedir}/src/main/resources/@{grammar}"/>
+                                            <arg value="--parser-type"/><arg value="@{type}"/>
+                                            <arg value="--output-directory"/>
+                                            <arg value="${project.build.directory}/generated-sources/lexengine"/>
+                                        </java>
+                                    </sequential>
+                                </macrodef>
+                                <generate-parser grammar="arithmetic.lg" type="LR1"/>
+                                <generate-parser grammar="list.lg" type="LL1"/>
+                                <generate-parser grammar="configuration.lg" type="RECURSIVE_DESCENT"/>
+                                <generate-parser grammar="json.lg" type="LR1"/>
+                                <generate-parser grammar="legacy-expression.grammar" type="RECURSIVE_DESCENT"/>
+                                <generate-parser grammar="canonical-lr1.grammar" type="LR1"/>
+                                <java classname="org.lexengine.lexer.Main" fork="true" failonerror="true">
+                                    <classpath refid="maven.compile.classpath"/>
+                                    <arg value="--lex-spec-file"/>
+                                    <arg value="${project.basedir}/src/main/resources/arithmetic.spec"/>
+                                    <arg value="--lexer-class"/><arg value="ArithmeticLexer"/>
+                                    <arg value="--lexer-package"/><arg value="org.lexengine.examples.lexer"/>
+                                    <arg value="--output-directory"/>
+                                    <arg value="${project.build.directory}/generated-sources/lexengine"/>
+                                </java>
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.6.0</version>
+                <executions>
+                    <execution>
+                        <id>compile-generated-examples</id>
+                        <phase>generate-sources</phase>
+                        <goals><goal>add-source</goal></goals>
+                        <configuration>
+                            <sources><source>${project.build.directory}/generated-sources/lexengine</source></sources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>

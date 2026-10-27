@@ -13,6 +13,27 @@ import org.junit.jupiter.api.Test;
 public class DfaMinimizerTest {
 
   @Test
+  void keepsFinalStatesWithDifferentTransitionSignaturesSeparate() {
+    DisjointIntSet alphabet = DisjointIntSet.from(java.util.List.of(Range.of('a'), Range.of('b')));
+    Dfa original = new Dfa(3, alphabet, java.util.Map.of(Range.of('a'), 0, Range.of('b'), 1));
+    for (int i = 0; i < 3; i++) original.createState();
+    original.setStartState(1);
+    LexRule.Action action = new LexRule.Action("{ return Token.word(value); }");
+    original.addFinalState(2, action);
+    original.addFinalState(3, action);
+    original.addTransition(1, 0, 2);
+    original.addTransition(1, 1, 3);
+    original.addTransition(2, 0, 2);
+    original.addTransition(3, 1, 3);
+    Dfa minimized = new DfaMinimizer(original).minimize();
+    for (String valid : java.util.List.of("a", "aa", "b", "bbb"))
+      assertNotNull(minimized.test(valid));
+    for (String invalid : java.util.List.of("ab", "ba", "aab")) assertNull(minimized.test(invalid));
+    org.junit.jupiter.api.Assertions.assertEquals(
+        original.statesCount() + 1, original.transitionTbl().length);
+  }
+
+  @Test
   void testMatchesAndNonMatches_case1() {
     Dfa dfa = new DfaGenerator(TestUtils.generateNfa("lexer-spec-dfa-min.spec")).generate();
     Dfa minDfa = new DfaMinimizer(dfa).minimize();

@@ -1,0 +1,7 @@
+# Literal parentheses and direct left recursion in the original two-section format.
+class=LegacyExpressionParser
+package=org.lexengine.examples.generated
+---
+EXPR -> EXPR + TERM | EXPR - TERM | TERM
+TERM -> TERM * FACTOR | TERM / FACTOR | FACTOR
+FACTOR -> ident | num | ( EXPR )

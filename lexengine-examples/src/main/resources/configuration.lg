@@ -1,0 +1,18 @@
+# A configuration document: assignments, optional semicolons and nested lists.
+package org.lexengine.examples.generated;
+public class ConfigParser {}
+---
+boolean: "true|false"
+name: "[a-zA-Z_][a-zA-Z0-9_]*"
+number: "-?(0|[1-9][0-9]*)(\.[0-9]+)?"
+string: "\"[^\"\r\n]*\""
+Punctuation: { equals: "=", semicolon: ";", open: "\[", close: "\]", comma: "," }
+TOKEN_IGNORE: {
+  whitespace: "[ \t\r\n]+",
+  comment: "#[^\r\n]*"
+}
+---
+CONFIG -> ENTRY* $Configuration;
+ENTRY -> name '=' VALUE ';'? $Assignment;
+VALUE -> boolean $Boolean | number $Number | string $String | LIST $List;
+LIST -> '[' (VALUE (',' VALUE)*)? ']' $List;

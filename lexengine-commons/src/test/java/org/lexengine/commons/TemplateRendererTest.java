@@ -17,6 +17,12 @@ import org.lexengine.commons.error.GeneratorException;
 public class TemplateRendererTest {
 
   @Test
+  void replacementPreservesDollarSignsAndBackslashes() {
+    assertEquals(
+        "$value\\path", TemplateRenderer.render("${body}", Map.of("body", "$value\\path")));
+  }
+
+  @Test
   public void testRender() {
     String template = "Hello, ${name}!";
     Map<String, String> model = Map.of("name", "John");

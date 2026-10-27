@@ -4,15 +4,14 @@
 */
 package org.lexengine.commons;
 
-import org.lexengine.commons.error.ErrorType;
-import org.lexengine.commons.error.GeneratorException;
-import org.lexengine.commons.logging.Out;
-
 import java.io.*;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.lexengine.commons.error.ErrorType;
+import org.lexengine.commons.error.GeneratorException;
+import org.lexengine.commons.logging.Out;
 
 /**
  * The TemplateRenderer class is responsible for rendering templates by replacing placeholders with
@@ -43,7 +42,8 @@ public class TemplateRenderer {
       this.template = readAll(templateReader);
       this.model = model;
     } catch (IOException e) {
-      throw GeneratorException.create(ErrorType.ERR_LEX_TEMPLATE_READ, e, "Error reading template reader");
+      throw GeneratorException.create(
+          ErrorType.ERR_LEX_TEMPLATE_READ, e, "Error reading template reader");
     }
   }
 
@@ -117,9 +117,12 @@ public class TemplateRenderer {
       String placeholder = matcher.group(1);
       String attrVal = model.get(placeholder);
       if (attrVal == null) {
-        throw GeneratorException.create(ErrorType.ERR_CLASS_GENERATE_ATTR_MISSING, "Failed to render template! Attribute %s not found!", placeholder);
+        throw GeneratorException.create(
+            ErrorType.ERR_CLASS_GENERATE_ATTR_MISSING,
+            "Failed to render template! Attribute %s not found!",
+            placeholder);
       }
-      matcher.appendReplacement(result, attrVal);
+      matcher.appendReplacement(result, Matcher.quoteReplacement(attrVal));
     }
     matcher.appendTail(result);
     return result.toString();

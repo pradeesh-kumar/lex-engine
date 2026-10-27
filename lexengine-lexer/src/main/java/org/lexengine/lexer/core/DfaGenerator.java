@@ -93,7 +93,8 @@ public final class DfaGenerator {
       return;
     }
     if (summary.getCount() > 1) {
-      Out.warn("stateSet has more than 1 final state. Highest priority is given for first declared state!");
+      Out.warn(
+          "stateSet has more than 1 final state. Highest priority is given for first declared state!");
     }
     dfa.addFinalState(dfaStateIndex, nfa.action(summary.getMin()));
   }
@@ -143,17 +144,16 @@ public final class DfaGenerator {
       return (BitSet) fromCache.clone();
     }
     BitSet epsilonTransitions = new BitSet();
-    epsilonTransitions.set(state); // epsilon = state U epsilon(state)
-
-    BitSet epsilonOfState = nfa.epsilonTransition(state);
-    if (epsilonOfState == null || epsilonOfState.isEmpty()) {
-      return epsilonTransitions;
+    java.util.ArrayDeque<Integer> pending = new java.util.ArrayDeque<>();
+    pending.push(state);
+    while (!pending.isEmpty()) {
+      int current = pending.pop();
+      if (epsilonTransitions.get(current)) continue;
+      epsilonTransitions.set(current);
+      BitSet next = nfa.epsilonTransition(current);
+      if (next != null) next.stream().forEach(pending::push);
     }
-    epsilonOfState.stream()
-        .peek(epsilonTransitions::set)
-        .mapToObj(this::epsilonClosure)
-        .forEach(epsilonTransitions::or);
-    stEpsilonTransitionCache.put(state, epsilonTransitions);
+    stEpsilonTransitionCache.put(state, (BitSet) epsilonTransitions.clone());
     return epsilonTransitions;
   }
 }

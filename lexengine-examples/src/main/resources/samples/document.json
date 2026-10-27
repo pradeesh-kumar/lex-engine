@@ -1,0 +1,8 @@
+{
+  "name": "Lex-Engine",
+  "versions": [21, 25],
+  "enabled": true,
+  "threshold": -1.25e+3,
+  "message": "line\nquote\"unicode\u0041",
+  "nested": {"items": [], "value": null}
+}

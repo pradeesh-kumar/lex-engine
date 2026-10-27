@@ -1,0 +1,17 @@
+# JSON values, recursive objects and arrays, escapes and numeric exponents.
+package org.lexengine.examples.generated;
+public class JsonParser {}
+---
+string: "\"([^\"\\\\\\x00-\\x1f]|\\\\([\"\\\\/bfnrt]|u[0-9a-fA-F]{4}))*\""
+number: "-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?"
+true: "true"
+false: "false"
+null: "null"
+Punctuation: { openObject: "\{", closeObject: "\}", openArray: "\[", closeArray: "\]", colon: ":", comma: "," }
+TOKEN_IGNORE: "[ \t\r\n]+"
+---
+VALUE -> OBJECT $Object | ARRAY $Array | string $String | number $Number
+       | 'true' $True | 'false' $False | 'null' $Null;
+OBJECT -> '{' (MEMBER (',' MEMBER)*)? '}' $Object;
+MEMBER -> string ':' VALUE $Member;
+ARRAY -> '[' (VALUE (',' VALUE)*)? ']' $Array;
